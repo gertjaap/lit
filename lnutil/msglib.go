@@ -47,7 +47,7 @@ const (
 type LitMsg interface {
 	Peer() uint32   //return PeerIdx
 	MsgType() uint8 //returns Message Type (see constants above)
-	Bytes() []byte  //returnns data of message as []byte with the MsgType() preceeding it
+	Bytes() []byte  //returns data of message as []byte with the MsgType() preceding it
 }
 
 func LitMsgEqual(msg LitMsg, msg2 LitMsg) bool {
@@ -482,14 +482,16 @@ type DeltaSigMsg struct {
 	Outpoint  wire.OutPoint
 	Delta     int32
 	Signature [64]byte
+	Data      [32]byte
 }
 
-func NewDeltaSigMsg(peerid uint32, OP wire.OutPoint, DELTA int32, SIG [64]byte) DeltaSigMsg {
+func NewDeltaSigMsg(peerid uint32, OP wire.OutPoint, DELTA int32, SIG [64]byte, data [32]byte) DeltaSigMsg {
 	d := new(DeltaSigMsg)
 	d.PeerIdx = peerid
 	d.Outpoint = OP
 	d.Delta = DELTA
 	d.Signature = SIG
+	d.Data = data
 	return *d
 }
 
@@ -510,6 +512,7 @@ func NewDeltaSigMsgFromBytes(b []byte, peerid uint32) (DeltaSigMsg, error) {
 	// deserialize DeltaSig
 	ds.Delta = BtI32(buf.Next(4))
 	copy(ds.Signature[:], buf.Next(64))
+	copy(ds.Data[:], buf.Next(32))
 	return *ds, nil
 }
 
@@ -520,6 +523,7 @@ func (self DeltaSigMsg) Bytes() []byte {
 	msg = append(msg, opArr[:]...)
 	msg = append(msg, I32tB(self.Delta)...)
 	msg = append(msg, self.Signature[:]...)
+	msg = append(msg, self.Data[:]...)
 	return msg
 }
 
@@ -654,7 +658,7 @@ func NewRevMsgFromBytes(b []byte, peerId uint32) (RevMsg, error) {
 	rv.PeerIdx = peerId
 
 	if len(b) < 102 {
-		return *rv, fmt.Errorf("got %d b yte REV, expect 102", len(b))
+		return *rv, fmt.Errorf("got %d byte REV, expect 102", len(b))
 	}
 
 	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
@@ -793,7 +797,7 @@ func NewComMsg(peerIdx, cointype uint32, destPKH [20]byte,
 	return *cm
 }
 
-// ComMsgFromBytes turns 132 bytes into a SorceMsg
+// ComMsgFromBytes turns 132 bytes into a SourceMsg
 // Silently fails with wrong size input.
 func NewWatchStateMsgFromBytes(b []byte, peerIDX uint32) (WatchStateMsg, error) {
 	sm := new(WatchStateMsg)
@@ -846,7 +850,7 @@ func (self WatchDelMsg) Bytes() []byte {
 	return buf.Bytes()
 }
 
-// ComMsgFromBytes turns 132 bytes into a SorceMsg
+// ComMsgFromBytes turns 132 bytes into a SourceMsg
 // Silently fails with wrong size input.
 func NewWatchDelMsgFromBytes(b []byte, peerIDX uint32) (WatchDelMsg, error) {
 	sm := new(WatchDelMsg)
