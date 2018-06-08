@@ -64,6 +64,16 @@ var historyCommand = &Command{
 	ShortDescription: "Show all the metadata for justice txs.\n",
 }
 
+var paymultihopCommand = &Command{
+	Format: fmt.Sprintf("%s%s\n", lnutil.White("paymultihop"), lnutil.ReqColor("dest cointype amount")),
+	Description: fmt.Sprintf("%s\n%s%s\n%s%s\n%s%s\n",
+		"Tries to pay using a multi-hop payment. Will fail if no route available",
+		lnutil.White("dest"), ": Destination address",
+		lnutil.White("cointype"), ": Coin type to pay",
+		lnutil.White("amount"), ": Amount to pay"),
+	ShortDescription: "Pay via multi-hop.\n",
+}
+
 func (lc *litAfClient) History(textArgs []string) error {
 	if len(textArgs) > 0 && textArgs[0] == "-h" {
 		fmt.Fprintf(color.Output, historyCommand.Format)
@@ -330,6 +340,42 @@ func (lc *litAfClient) Watch(textArgs []string) error {
 
 	fmt.Fprintf(color.Output, "Send channel %d data to peer %d\n",
 		args.ChanIdx, args.SendToPeer)
+
+	return nil
+}
+
+func (lc *litAfClient) PayMultihop(textArgs []string) error {
+	if len(textArgs) > 0 && textArgs[0] == "-h" {
+		fmt.Fprintf(color.Output, paymultihopCommand.Format)
+		fmt.Fprintf(color.Output, paymultihopCommand.Description)
+		return nil
+	}
+
+	args := new(litrpc.PayMultihopArgs)
+	reply := new(litrpc.StatusReply)
+
+	if len(textArgs) < 3 {
+		return fmt.Errorf("need args: paymultihop dest cointype amount")
+	}
+
+	args.DestLNAdr = textArgs[0]
+	cointype, err := strconv.Atoi(textArgs[1])
+	if err != nil {
+		return err
+	}
+	args.CoinType = uint32(cointype)
+	amount, err := strconv.Atoi(textArgs[2])
+	if err != nil {
+		return err
+	}
+	args.Amt = int64(amount)
+
+	err = lc.Call("LitRPC.PayMultihop", args, reply)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintf(color.Output, "%s\n", reply.Status)
 
 	return nil
 }

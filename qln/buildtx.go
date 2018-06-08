@@ -7,6 +7,7 @@ import (
 	"github.com/mit-dci/lit/lnutil"
 
 	"github.com/adiabat/btcd/wire"
+	"github.com/adiabat/btcutil"
 	"github.com/adiabat/btcutil/txsort"
 )
 
@@ -165,6 +166,15 @@ func (q *Qchan) BuildStateTx(mine bool) (*wire.MsgTx, error) {
 		}
 	}
 
+	// Deduct htlc amounts from primary outputs
+	for _, h := range s.CurrentHtlcs {
+		if h.Incoming && mine || !h.Incoming && !mine {
+			fancyAmt -= h.Amt
+		} else {
+			pkhAmt -= h.Amt
+		}
+	}
+
 	// check amounts.  Nonzero amounts below the minOutput is an error.
 	// Shouldn't happen and means some checks in push/pull went wrong.
 	if fancyAmt != 0 && fancyAmt < consts.MinOutput {
@@ -200,6 +210,15 @@ func (q *Qchan) BuildStateTx(mine bool) (*wire.MsgTx, error) {
 	}
 	if pkhAmt != 0 {
 		tx.AddTxOut(outPKH)
+	}
+
+	for _, h := range s.CurrentHtlcs {
+		sender := h.Incoming && !mine || !h.Incoming && mine
+		var revHash [20]byte
+		copy(revHash[:], btcutil.Hash160(revPub[:]))
+		htlcScript := lnutil.HTLCScript(h.Hhash, revHash, q.TheirPub, q.MyPub, h.AbsDelay, h.RelDelay, sender)
+		htlcOut := wire.NewTxOut(h.Amt, htlcScript)
+		tx.AddTxOut(htlcOut)
 	}
 
 	if len(tx.TxOut) < 1 {

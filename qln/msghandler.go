@@ -62,6 +62,18 @@ func (nd *LitNode) PeerHandler(msg lnutil.LitMsg, q *Qchan, peer *RemotePeer) er
 		if msg.MsgType() == lnutil.MSGID_LINK_DESC {
 			nd.LinkMsgHandler(msg.(lnutil.LinkMsg))
 		}
+		if msg.MsgType() == lnutil.MSGID_PAY_REQ {
+			nd.MultihopPaymentRequestHandler(msg.(lnutil.MultihopPaymentRequestMsg))
+		}
+		if msg.MsgType() == lnutil.MSGID_PAY_ACK {
+			nd.MultihopPaymentAckHandler(msg.(lnutil.MultihopPaymentAckMsg))
+		}
+		if msg.MsgType() == lnutil.MSGID_PAY_SETUP {
+			nd.MultihopPaymentSetupHandler(msg.(lnutil.MultihopPaymentSetupMsg))
+		}
+		if msg.MsgType() == lnutil.MSGID_PAY_SETTLE {
+			nd.MultihopPaymentSettleHandler(msg.(lnutil.MultihopPaymentSettleMsg))
+		}
 
 	case 0x90: // Discreet log contract messages
 		if msg.MsgType() == lnutil.MSGID_DLC_OFFER {
@@ -124,7 +136,7 @@ func (nd *LitNode) LNDCReader(peer *RemotePeer) error {
 		}
 		msg = msg[:n]
 
-		fmt.Printf("decrypted message is %x\n", msg)
+		//fmt.Printf("decrypted message is %x\n", msg)
 
 		var routedMsg lnutil.LitMsg
 		routedMsg, err = lnutil.LitMsgFromBytes(msg, peer.Idx)
@@ -132,10 +144,10 @@ func (nd *LitNode) LNDCReader(peer *RemotePeer) error {
 			return err
 		}
 
-		fmt.Printf("peerIdx is %d\n", routedMsg.Peer())
-		fmt.Printf("routed bytes %x\n", routedMsg.Bytes())
+		//fmt.Printf("peerIdx is %d\n", routedMsg.Peer())
+		//fmt.Printf("routed bytes %x\n", routedMsg.Bytes())
 
-		fmt.Printf("message type %x\n", routedMsg.MsgType())
+		//fmt.Printf("message type %x\n", routedMsg.MsgType())
 
 		var chanIdx uint32
 		chanIdx = 0

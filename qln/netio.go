@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/adiabat/bech32"
 	"github.com/adiabat/btcd/btcec"
 	"github.com/mit-dci/lit/lndc"
 	"github.com/mit-dci/lit/lnutil"
@@ -147,6 +148,16 @@ func (nd *LitNode) DialPeer(connectAdr string) error {
 	go nd.LNDCReader(&p)
 
 	return nil
+}
+
+func (nd *LitNode) FindPeerIndexByAddress(lnAdr string) (uint32, error) {
+	for idx, peer := range nd.RemoteCons {
+		adr := bech32.Encode("ln", peer.Con.RemotePub.SerializeCompressed())
+		if adr == lnAdr {
+			return idx, nil
+		}
+	}
+	return 0, fmt.Errorf("Node %s not found", lnAdr)
 }
 
 // OutMessager takes messages from the outbox and sends them to the ether. net.

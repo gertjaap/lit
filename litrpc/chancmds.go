@@ -5,9 +5,9 @@ import (
 	"log"
 
 	"github.com/adiabat/btcutil"
+	"github.com/mit-dci/lit/consts"
 	"github.com/mit-dci/lit/portxo"
 	"github.com/mit-dci/lit/qln"
-	"github.com/mit-dci/lit/consts"
 )
 
 type ChannelInfo struct {
@@ -333,4 +333,16 @@ func (r *LitRPC) DumpPrivs(args NoArgs, reply *DumpReply) error {
 	}
 
 	return nil
+}
+
+type PayMultihopArgs struct {
+	DestLNAdr string
+	CoinType  uint32
+	Amt       int64
+}
+
+// PayMultihop tries to find a multi-hop path to send the payment along
+func (r *LitRPC) PayMultihop(args PayMultihopArgs, reply *StatusReply) error {
+	_, err := r.Node.PayMultihop(args.DestLNAdr, args.CoinType, args.Amt)
+	return err
 }

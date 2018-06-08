@@ -132,6 +132,14 @@ type LitNode struct {
 
 	ChannelMap map[[20]byte][]lnutil.LinkMsg
 	AdvTimeout *time.Ticker
+
+	InProgMultihop []*InFlightMultihop
+}
+
+type InFlightMultihop struct {
+	Path     [][20]byte
+	Amt      int64
+	PreImage [32]byte
 }
 
 type RemotePeer struct {

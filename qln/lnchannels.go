@@ -75,6 +75,25 @@ type StatCom struct {
 	// sig should have a sig.
 	// only one sig is ever stored, to prevent broadcasting the wrong tx.
 	// could add a mutex here... maybe will later.
+
+	// Htlcs
+	CurrentHtlcs []*Htlc
+}
+
+// Htlcs are Hash Time Lock Contracts, used for
+// multi-hop payments
+type Htlc struct {
+	// if the HTLC is potentially paying us (if we know the preimage)
+	// if false; we're potentially paying them.
+	Incoming bool
+
+	Idx int64 // sequential index of all incoming HTLCs.  Outgoing have idx -1
+
+	Amt int64
+
+	Hhash [20]byte
+
+	AbsDelay, RelDelay uint16
 }
 
 // QCloseData is the output resulting from an un-cooperative close
