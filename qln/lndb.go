@@ -139,6 +139,7 @@ type LitNode struct {
 type InFlightMultihop struct {
 	Path     [][20]byte
 	Amt      int64
+	HHash    [20]byte
 	PreImage [32]byte
 }
 

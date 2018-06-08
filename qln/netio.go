@@ -6,6 +6,7 @@ import (
 
 	"github.com/adiabat/bech32"
 	"github.com/adiabat/btcd/btcec"
+	"github.com/btcsuite/fastsha256"
 	"github.com/mit-dci/lit/lndc"
 	"github.com/mit-dci/lit/lnutil"
 )
@@ -152,7 +153,8 @@ func (nd *LitNode) DialPeer(connectAdr string) error {
 
 func (nd *LitNode) FindPeerIndexByAddress(lnAdr string) (uint32, error) {
 	for idx, peer := range nd.RemoteCons {
-		adr := bech32.Encode("ln", peer.Con.RemotePub.SerializeCompressed())
+		nodePkh := fastsha256.Sum256(peer.Con.RemotePub.SerializeCompressed())
+		adr := bech32.Encode("ln", nodePkh[:20])
 		if adr == lnAdr {
 			return idx, nil
 		}
@@ -173,11 +175,11 @@ func (nd *LitNode) OutMessager() {
 		//rawmsg := append([]byte{msg.MsgType()}, msg.Data...)
 		rawmsg := msg.Bytes() // automatically includes messageType
 		nd.RemoteMtx.Lock()   // not sure this is needed...
-		n, err := nd.RemoteCons[msg.Peer()].Con.Write(rawmsg)
+		_, err := nd.RemoteCons[msg.Peer()].Con.Write(rawmsg)
 		if err != nil {
 			fmt.Printf("error writing to peer %d: %s\n", msg.Peer(), err.Error())
 		} else {
-			fmt.Printf("type %x %d bytes to peer %d\n", msg.MsgType(), n, msg.Peer())
+			//fmt.Printf("type %x %d bytes to peer %d\n", msg.MsgType(), n, msg.Peer())
 		}
 		nd.RemoteMtx.Unlock()
 	}
