@@ -43,7 +43,7 @@ func (nd *LitNode) PayMultihop(dstLNAdr string, coinType uint32, amount int64) (
 
 func (nd *LitNode) MultihopPaymentRequestHandler(msg lnutil.MultihopPaymentRequestMsg) error {
 	// Generate private preimage and send ack with the hash
-	fmt.Printf("Received multihop payment request from peer %d", msg.Peer())
+	fmt.Printf("Received multihop payment request from peer %d\n", msg.Peer())
 	inFlight := new(InFlightMultihop)
 	var pkh [20]byte
 	id, _ := nd.GetPubHostFromPeerIdx(msg.Peer())
@@ -84,31 +84,23 @@ func (nd *LitNode) MultihopPaymentAckHandler(msg lnutil.MultihopPaymentAckMsg) e
 func (nd *LitNode) MultihopPaymentSetupHandler(msg lnutil.MultihopPaymentSetupMsg) error {
 	fmt.Printf("Received multihop payment setup from peer %d, hash %x\n", msg.Peer(), msg.HHash)
 
-	found := false
-	inFlight := new(InFlightMultihop)
-
+	var nullBytes [32]byte
 	for _, mh := range nd.InProgMultihop {
-		if bytes.Equal(mh.Path[0][:], msg.NodeRoute[0][:]) && mh.Amt == msg.Amount {
-
-			inFlight = mh
-			found = true
+		if mh.PreImage != nullBytes && bytes.Equal(msg.HHash[:], btcutil.Hash160(mh.PreImage[:])) {
 			// We already know this. If we have a Preimage, then we're the receiving
 			// end and we should send a settlement message to the
 			// predecessor
-			var nullBytes [32]byte
-			if mh.PreImage != nullBytes {
-				outMsg := lnutil.NewMultihopPaymentSettleMsg(msg.Peer(), mh.PreImage)
-				nd.OmniOut <- outMsg
-			}
+			outMsg := lnutil.NewMultihopPaymentSettleMsg(msg.Peer(), mh.PreImage)
+			nd.OmniOut <- outMsg
+			return nil
 		}
 	}
 
-	if !found {
-		inFlight.Path = msg.NodeRoute
-		inFlight.Amt = msg.Amount
-		inFlight.HHash = msg.HHash
-		nd.InProgMultihop = append(nd.InProgMultihop, inFlight)
-	}
+	inFlight := new(InFlightMultihop)
+	inFlight.Path = msg.NodeRoute
+	inFlight.Amt = msg.Amount
+	inFlight.HHash = msg.HHash
+	nd.InProgMultihop = append(nd.InProgMultihop, inFlight)
 
 	// Forward
 	var pkh [20]byte
