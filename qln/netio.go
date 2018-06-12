@@ -152,7 +152,9 @@ func (nd *LitNode) DialPeer(connectAdr string) error {
 func (nd *LitNode) FindPeerIndexByAddress(lnAdr string) (uint32, error) {
 	nd.RemoteMtx.Lock()
 	for idx, peer := range nd.RemoteCons {
-		adr := lnutil.LitAdrFromPubkey(peer.Con.RemotePub.SerializeCompressed())
+		var pubKey [33]byte
+		copy(pubKey[:], peer.Con.RemotePub.SerializeCompressed())
+		adr := lnutil.LitAdrFromPubkey(pubKey)
 		if adr == lnAdr {
 			nd.RemoteMtx.Unlock()
 			return idx, nil
