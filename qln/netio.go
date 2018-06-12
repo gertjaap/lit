@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/adiabat/bech32"
 	"github.com/adiabat/btcd/btcec"
-	"github.com/btcsuite/fastsha256"
 	"github.com/mit-dci/lit/lndc"
 	"github.com/mit-dci/lit/lnutil"
 )
@@ -152,13 +150,15 @@ func (nd *LitNode) DialPeer(connectAdr string) error {
 }
 
 func (nd *LitNode) FindPeerIndexByAddress(lnAdr string) (uint32, error) {
+	nd.RemoteMtx.Lock()
 	for idx, peer := range nd.RemoteCons {
-		nodePkh := fastsha256.Sum256(peer.Con.RemotePub.SerializeCompressed())
-		adr := bech32.Encode("ln", nodePkh[:20])
+		adr := lnutil.LitAdrFromPubkey(peer.Con.RemotePub.SerializeCompressed())
 		if adr == lnAdr {
+			nd.RemoteMtx.Unlock()
 			return idx, nil
 		}
 	}
+	nd.RemoteMtx.Unlock()
 	return 0, fmt.Errorf("Node %s not found", lnAdr)
 }
 
