@@ -16,6 +16,8 @@ import (
 )
 
 func (nd *LitNode) InitRouting() {
+	nd.ChannelMapMtx.Lock()
+	defer nd.ChannelMapMtx.Unlock()
 	nd.ChannelMap = make(map[[20]byte][]lnutil.LinkMsg)
 
 	nd.AdvTimeout = time.NewTicker(15 * time.Second)
@@ -35,6 +37,9 @@ func (nd *LitNode) InitRouting() {
 func (nd *LitNode) VisualiseGraph() string {
 	graph := gographviz.NewGraph()
 	graph.SetName("Lit")
+
+	nd.ChannelMapMtx.Lock()
+	defer nd.ChannelMapMtx.Unlock()
 
 	for pkh, node := range nd.ChannelMap {
 		lnAdr := bech32.Encode("ln", pkh[:])
@@ -146,6 +151,9 @@ func (nd *LitNode) FindPath(targetPkh [20]byte, coinType uint32, amount int64) (
 }
 
 func (nd *LitNode) cleanStaleChannels() {
+	nd.ChannelMapMtx.Lock()
+	defer nd.ChannelMapMtx.Unlock()
+
 	newChannelMap := make(map[[20]byte][]lnutil.LinkMsg)
 
 	now := time.Now().Unix()
@@ -162,6 +170,10 @@ func (nd *LitNode) cleanStaleChannels() {
 }
 
 func (nd *LitNode) advertiseLinks(seq uint32) {
+	nd.RemoteMtx.Lock()
+
+	var msgs []lnutil.LinkMsg
+
 	for _, peer := range nd.RemoteCons {
 		for _, q := range peer.QCs {
 			if !q.CloseData.Closed && q.State.MyAmt > 0 {
@@ -186,13 +198,24 @@ func (nd *LitNode) advertiseLinks(seq uint32) {
 
 				outmsg.PeerIdx = math.MaxUint32
 
-				nd.LinkMsgHandler(outmsg)
+				msgs = append(msgs, outmsg)
 			}
 		}
+	}
+
+	nd.RemoteMtx.Unlock()
+
+	for _, msg := range msgs {
+		nd.LinkMsgHandler(msg)
 	}
 }
 
 func (nd *LitNode) LinkMsgHandler(msg lnutil.LinkMsg) {
+	nd.ChannelMapMtx.Lock()
+	defer nd.ChannelMapMtx.Unlock()
+	nd.RemoteMtx.Lock()
+	defer nd.RemoteMtx.Unlock()
+
 	msg.Timestamp = time.Now().Unix()
 	newChan := true
 

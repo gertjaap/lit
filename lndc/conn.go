@@ -7,7 +7,10 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"strings"
 	"time"
+
+	"golang.org/x/net/proxy"
 
 	"github.com/adiabat/btcd/btcec"
 	"github.com/btcsuite/fastsha256"
@@ -50,9 +53,32 @@ func NewConn(conn net.Conn) *LNDConn {
 	return &LNDConn{Conn: conn}
 }
 
+func IP4(ipAddress string) bool {
+	parseIp := net.ParseIP(ipAddress)
+	if parseIp.To4() == nil {
+		return false
+	}
+	return true
+}
+
+func parseAdr(netAddress string) (string, string, error) {
+	colonCount := strings.Count(netAddress, ":")
+	var conMode string
+	if colonCount == 1 && IP4(strings.Split(netAddress, ":")[0]) {
+		// only ipv4 clears this since ipv6 has 6 colons (with port no)
+		conMode = "tcp4"
+		return netAddress, conMode, nil
+	} else if colonCount >= 5 {
+		conMode = "tcp6"
+		return netAddress, conMode, nil
+	} else {
+		return "", "", fmt.Errorf("Invalid ip")
+	}
+}
+
 // Dial...
 func (c *LNDConn) Dial(
-	myId *btcec.PrivateKey, netAddress string, remotePKH string) error {
+	myId *btcec.PrivateKey, netAddress string, remotePKH string, proxyURL string) error {
 
 	var err error
 	if myId == nil {
@@ -64,10 +90,30 @@ func (c *LNDConn) Dial(
 			return fmt.Errorf("connection already established")
 		}
 
-		// First, open the TCP connection itself.
-		c.Conn, err = net.Dial("tcp", netAddress)
-		if err != nil {
-			return err
+		if proxyURL != "" {
+			d, err := proxy.SOCKS5("tcp", proxyURL, nil, proxy.Direct)
+			if err != nil {
+				return err
+			}
+
+			netAddress, conMode, err := parseAdr(netAddress)
+			if err != nil {
+				return fmt.Errorf("Invalid ip")
+			}
+			c.Conn, err = d.Dial(conMode, netAddress)
+			if err != nil {
+				return err
+			}
+		} else {
+			// First, open the TCP connection itself.
+			netAddress, conMode, err := parseAdr(netAddress)
+			if err != nil {
+				return fmt.Errorf("Invalid ip")
+			}
+			c.Conn, err = net.Dial(conMode, netAddress)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -307,7 +353,7 @@ func (c *LNDConn) Write(b []byte) (n int, err error) {
 	if err != nil {
 		return 0, err
 	}
-	if len(ctext) > 65530 {
+	if len(ctext) > maxMsgSize {
 		return 0, fmt.Errorf("Write to %x too long, %d bytes",
 			c.RemotePub.SerializeCompressed(), len(ctext))
 	}
