@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -25,6 +24,7 @@ type config struct { // define a struct for usage with go-flags
 	LitHomeDir  string `long:"dir" description:"Specify Home Directory of lit as an absolute path."`
 	TrackerURL  string `long:"tracker" description:"LN address tracker URL http|https://host:port"`
 	ConfigFile  string
+	ProxyURL    string `long:"proxy" description:"SOCKS5 proxy to use for communicating with the network"`
 
 	ReSync  bool `short:"r" long:"reSync" description:"Resync from the given tip."`
 	Tower   bool `long:"tower" description:"Watchtower: Run a watching node"`
@@ -78,7 +78,7 @@ func linkWallets(node *qln.LitNode, key *[32]byte, conf *config) error {
 	// try regtest
 	if !lnutil.NopeString(conf.Reghost) {
 		p := &coinparam.RegressionNetParams
-		fmt.Printf("reg: %s\n", conf.Reghost)
+		log.Printf("reg: %s\n", conf.Reghost)
 		err = node.LinkBaseWallet(key, 120, conf.ReSync, conf.Tower, conf.Reghost, p)
 		if err != nil {
 			return err
@@ -152,7 +152,7 @@ func main() {
 
 	// Setup LN node.  Activate Tower if in hard mode.
 	// give node and below file pathof lit home directory
-	node, err := qln.NewLitNode(key, conf.LitHomeDir, conf.TrackerURL)
+	node, err := qln.NewLitNode(key, conf.LitHomeDir, conf.TrackerURL, conf.ProxyURL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -175,7 +175,7 @@ func main() {
 	}
 
 	<-rpcl.OffButton
-	fmt.Printf("Got stop request\n")
+	log.Printf("Got stop request\n")
 	time.Sleep(time.Second)
 
 	return
