@@ -3,9 +3,9 @@ package qln
 import (
 	"fmt"
 
-	"github.com/adiabat/btcd/btcec"
-	"github.com/adiabat/btcd/chaincfg/chainhash"
-	"github.com/adiabat/btcd/wire"
+	"github.com/mit-dci/lit/btcutil/btcd/btcec"
+	"github.com/mit-dci/lit/btcutil/btcd/chaincfg/chainhash"
+	"github.com/mit-dci/lit/wire"
 	"github.com/mit-dci/lit/coinparam"
 	"github.com/mit-dci/lit/lnutil"
 	"github.com/mit-dci/lit/portxo"
@@ -20,7 +20,7 @@ type UWallet interface {
 
 	// Have GetPriv for now.  Maybe later get rid of this and have
 	// the underlying wallet sign?
-	GetPriv(k portxo.KeyGen) *btcec.PrivateKey
+	GetPriv(k portxo.KeyGen) (*btcec.PrivateKey, error)
 
 	// Send a tx out to the network.  Maybe could replace?  Maybe not.
 	// Needed for channel break / cooperative close.  Maybe grabs.

@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/adiabat/btcd/btcec"
-	"github.com/adiabat/btcd/txscript"
-	"github.com/adiabat/btcd/wire"
-	"github.com/adiabat/btcutil"
-	"github.com/adiabat/btcutil/txsort"
+	"github.com/mit-dci/lit/btcutil"
+	"github.com/mit-dci/lit/btcutil/btcd/btcec"
+	"github.com/mit-dci/lit/btcutil/btcd/txscript"
+	"github.com/mit-dci/lit/btcutil/txsort"
 	"github.com/mit-dci/lit/dlc"
 	"github.com/mit-dci/lit/lnutil"
 	"github.com/mit-dci/lit/portxo"
 	"github.com/mit-dci/lit/sig64"
+	"github.com/mit-dci/lit/wire"
 )
 
 func (nd *LitNode) AddContract() (*lnutil.DlcContract, error) {
@@ -333,8 +333,8 @@ func (nd *LitNode) DlcOfferHandler(msg lnutil.DlcOfferMsg, peer *RemotePeer) err
 
 	err := nd.DlcManager.SaveContract(c)
 	if err != nil {
-		fmt.Printf("DlcOfferHandler SaveContract err %s\n", err.Error())
-		return err
+		log.Printf("DlcOfferHandler SaveContract err %s\n", err.Error())
+		return
 	}
 
 	_, ok := nd.SubWallet[msg.Contract.CoinType]
@@ -367,15 +367,15 @@ func (nd *LitNode) DlcOfferHandler(msg lnutil.DlcOfferMsg, peer *RemotePeer) err
 func (nd *LitNode) DlcDeclineHandler(msg lnutil.DlcOfferDeclineMsg, peer *RemotePeer) error {
 	c, err := nd.DlcManager.LoadContract(msg.Idx)
 	if err != nil {
-		fmt.Printf("DlcDeclineHandler FindContract err %s\n", err.Error())
-		return err
+		log.Printf("DlcDeclineHandler FindContract err %s\n", err.Error())
+		return
 	}
 
 	c.Status = lnutil.ContractStatusDeclined
 	err = nd.DlcManager.SaveContract(c)
 	if err != nil {
-		fmt.Printf("DlcDeclineHandler SaveContract err %s\n", err.Error())
-		return err
+		log.Printf("DlcDeclineHandler SaveContract err %s\n", err.Error())
+		return
 	}
 	return nil
 }
@@ -383,7 +383,7 @@ func (nd *LitNode) DlcDeclineHandler(msg lnutil.DlcOfferDeclineMsg, peer *Remote
 func (nd *LitNode) DlcAcceptHandler(msg lnutil.DlcOfferAcceptMsg, peer *RemotePeer) error {
 	c, err := nd.DlcManager.LoadContract(msg.Idx)
 	if err != nil {
-		fmt.Printf("DlcAcceptHandler FindContract err %s\n", err.Error())
+		log.Printf("DlcAcceptHandler FindContract err %s\n", err.Error())
 		return err
 	}
 
@@ -400,7 +400,7 @@ func (nd *LitNode) DlcAcceptHandler(msg lnutil.DlcOfferAcceptMsg, peer *RemotePe
 	c.Status = lnutil.ContractStatusAccepted
 	err = nd.DlcManager.SaveContract(c)
 	if err != nil {
-		fmt.Printf("DlcAcceptHandler SaveContract err %s\n", err.Error())
+		log.Printf("DlcAcceptHandler SaveContract err %s\n", err.Error())
 		return err
 	}
 
@@ -427,8 +427,8 @@ func (nd *LitNode) DlcAcceptHandler(msg lnutil.DlcOfferAcceptMsg, peer *RemotePe
 func (nd *LitNode) DlcContractAckHandler(msg lnutil.DlcContractAckMsg, peer *RemotePeer) error {
 	c, err := nd.DlcManager.LoadContract(msg.Idx)
 	if err != nil {
-		fmt.Printf("DlcContractAckHandler FindContract err %s\n", err.Error())
-		return err
+		log.Printf("DlcContractAckHandler FindContract err %s\n", err.Error())
+		return
 	}
 
 	// TODO: Check signatures
@@ -437,27 +437,27 @@ func (nd *LitNode) DlcContractAckHandler(msg lnutil.DlcContractAckMsg, peer *Rem
 
 	err = nd.DlcManager.SaveContract(c)
 	if err != nil {
-		fmt.Printf("DlcContractAckHandler SaveContract err %s\n", err.Error())
-		return err
+		log.Printf("DlcContractAckHandler SaveContract err %s\n", err.Error())
+		return
 	}
 
 	// We have everything now, send our signatures to the funding TX
 	wal, ok := nd.SubWallet[c.CoinType]
 	if !ok {
-		fmt.Printf("DlcContractAckHandler No wallet for cointype %d\n", c.CoinType)
-		return err
+		log.Printf("DlcContractAckHandler No wallet for cointype %d\n", c.CoinType)
+		return
 	}
 
 	tx, err := nd.BuildDlcFundingTransaction(c)
 	if err != nil {
-		fmt.Printf("DlcContractAckHandler BuildDlcFundingTransaction err %s\n", err.Error())
-		return err
+		log.Printf("DlcContractAckHandler BuildDlcFundingTransaction err %s\n", err.Error())
+		return
 	}
 
 	err = wal.SignMyInputs(&tx)
 	if err != nil {
-		fmt.Printf("DlcContractAckHandler SignMyInputs err %s\n", err.Error())
-		return err
+		log.Printf("DlcContractAckHandler SignMyInputs err %s\n", err.Error())
+		return
 	}
 
 	outMsg := lnutil.NewDlcContractFundingSigsMsg(c, &tx)
@@ -469,8 +469,8 @@ func (nd *LitNode) DlcContractAckHandler(msg lnutil.DlcContractAckMsg, peer *Rem
 func (nd *LitNode) DlcFundingSigsHandler(msg lnutil.DlcContractFundingSigsMsg, peer *RemotePeer) error {
 	c, err := nd.DlcManager.LoadContract(msg.Idx)
 	if err != nil {
-		fmt.Printf("DlcFundingSigsHandler FindContract err %s\n", err.Error())
-		return err
+		log.Printf("DlcFundingSigsHandler FindContract err %s\n", err.Error())
+		return
 	}
 
 	// TODO: Check signatures
@@ -478,8 +478,8 @@ func (nd *LitNode) DlcFundingSigsHandler(msg lnutil.DlcContractFundingSigsMsg, p
 	// We have everything now. Sign our inputs to the funding TX and send it to the blockchain.
 	wal, ok := nd.SubWallet[c.CoinType]
 	if !ok {
-		fmt.Printf("DlcFundingSigsHandler No wallet for cointype %d\n", c.CoinType)
-		return err
+		log.Printf("DlcFundingSigsHandler No wallet for cointype %d\n", c.CoinType)
+		return
 	}
 
 	err = wal.SignMyInputs(msg.SignedFundingTx)
@@ -496,15 +496,15 @@ func (nd *LitNode) DlcFundingSigsHandler(msg lnutil.DlcContractFundingSigsMsg, p
 
 	err = wal.WatchThis(c.FundingOutpoint)
 	if err != nil {
-		fmt.Printf("DlcFundingSigsHandler WatchThis err %s\n", err.Error())
-		return err
+		log.Printf("DlcFundingSigsHandler WatchThis err %s\n", err.Error())
+		return
 	}
 
 	c.Status = lnutil.ContractStatusActive
 	err = nd.DlcManager.SaveContract(c)
 	if err != nil {
-		fmt.Printf("DlcFundingSigsHandler SaveContract err %s\n", err.Error())
-		return err
+		log.Printf("DlcFundingSigsHandler SaveContract err %s\n", err.Error())
+		return
 	}
 
 	outMsg := lnutil.NewDlcContractSigProofMsg(c, msg.SignedFundingTx)
@@ -516,28 +516,28 @@ func (nd *LitNode) DlcFundingSigsHandler(msg lnutil.DlcContractFundingSigsMsg, p
 func (nd *LitNode) DlcSigProofHandler(msg lnutil.DlcContractSigProofMsg, peer *RemotePeer) error {
 	c, err := nd.DlcManager.LoadContract(msg.Idx)
 	if err != nil {
-		fmt.Printf("DlcSigProofHandler FindContract err %s\n", err.Error())
-		return err
+		log.Printf("DlcSigProofHandler FindContract err %s\n", err.Error())
+		return
 	}
 
 	// TODO: Check signatures
 	wal, ok := nd.SubWallet[c.CoinType]
 	if !ok {
-		fmt.Printf("DlcSigProofHandler No wallet for cointype %d\n", c.CoinType)
-		return err
+		log.Printf("DlcSigProofHandler No wallet for cointype %d\n", c.CoinType)
+		return
 	}
 
 	err = wal.WatchThis(c.FundingOutpoint)
 	if err != nil {
-		fmt.Printf("DlcSigProofHandler WatchThis err %s\n", err.Error())
-		return err
+		log.Printf("DlcSigProofHandler WatchThis err %s\n", err.Error())
+		return
 	}
 
 	c.Status = lnutil.ContractStatusActive
 	err = nd.DlcManager.SaveContract(c)
 	if err != nil {
-		fmt.Printf("DlcSigProofHandler SaveContract err %s\n", err.Error())
-		return err
+		log.Printf("DlcSigProofHandler SaveContract err %s\n", err.Error())
+		return
 	}
 	return nil
 }
@@ -556,8 +556,8 @@ func (nd *LitNode) SignSettlementDivisions(c *lnutil.DlcContract) ([]lnutil.DlcC
 	kg.Step[3] = c.PeerIdx | 1<<31
 	kg.Step[4] = uint32(c.Idx) | 1<<31
 
-	priv := wal.GetPriv(kg)
-	if priv == nil {
+	priv, err := wal.GetPriv(kg)
+	if err != nil {
 		return nil, fmt.Errorf("Could not get private key for contract %d", c.Idx)
 	}
 
@@ -652,20 +652,20 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 
 	c, err := nd.DlcManager.LoadContract(cIdx)
 	if err != nil {
-		fmt.Printf("SettleContract FindContract err %s\n", err.Error())
+		log.Printf("SettleContract FindContract err %s\n", err.Error())
 		return [32]byte{}, [32]byte{}, err
 	}
 
 	c.Status = lnutil.ContractStatusSettling
 	err = nd.DlcManager.SaveContract(c)
 	if err != nil {
-		fmt.Printf("SettleContract SaveContract err %s\n", err.Error())
+		log.Printf("SettleContract SaveContract err %s\n", err.Error())
 		return [32]byte{}, [32]byte{}, err
 	}
 
 	d, err := c.GetDivision(oracleValue)
 	if err != nil {
-		fmt.Printf("SettleContract GetDivision err %s\n", err.Error())
+		log.Printf("SettleContract GetDivision err %s\n", err.Error())
 		return [32]byte{}, [32]byte{}, err
 	}
 
@@ -682,14 +682,14 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 	kg.Step[3] = c.PeerIdx | 1<<31
 	kg.Step[4] = uint32(c.Idx) | 1<<31
 
-	priv := wal.GetPriv(kg)
-	if priv == nil {
+	priv, err := wal.GetPriv(kg)
+	if err != nil {
 		return [32]byte{}, [32]byte{}, fmt.Errorf("SettleContract Could not get private key for contract %d", c.Idx)
 	}
 
 	settleTx, err := lnutil.SettlementTx(c, *d, false)
 	if err != nil {
-		fmt.Printf("SettleContract SettlementTx err %s\n", err.Error())
+		log.Printf("SettleContract SettlementTx err %s\n", err.Error())
 		return [32]byte{}, [32]byte{}, err
 	}
 
@@ -739,7 +739,8 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 	txClaim.AddTxOut(wire.NewTxOut(d.ValueOurs-1000, lnutil.DirectWPKHScriptFromPKH(addr))) // todo calc fee - fee is double here because the contract output already had the fee deducted in the settlement TX
 
 	kg.Step[2] = UseContractPayoutBase
-	privSpend := wal.GetPriv(kg)
+	privSpend, _ := wal.GetPriv(kg)
+
 	pubSpend := wal.GetPub(kg)
 	privOracle, pubOracle := btcec.PrivKeyFromBytes(btcec.S256(), oracleSig[:])
 	privContractOutput := lnutil.CombinePrivateKeys(privSpend, privOracle)

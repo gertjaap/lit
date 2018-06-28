@@ -3,11 +3,12 @@ package qln
 import (
 	"bytes"
 	"fmt"
+	"log"
 
-	"github.com/adiabat/btcd/txscript"
-	"github.com/adiabat/btcd/wire"
+	"github.com/mit-dci/lit/btcutil/btcd/txscript"
 	"github.com/mit-dci/lit/lnutil"
 	"github.com/mit-dci/lit/portxo"
+	"github.com/mit-dci/lit/wire"
 )
 
 // handles stuff that comes in over the wire.  Not user-initiated.
@@ -62,6 +63,9 @@ func (nd *LitNode) PeerHandler(msg lnutil.LitMsg, q *Qchan, peer *RemotePeer) er
 		if msg.MsgType() == lnutil.MSGID_LINK_DESC {
 			nd.LinkMsgHandler(msg.(lnutil.LinkMsg))
 		}
+
+	case 0xA0: // Dual Funding messages
+		return nd.DualFundingHandler(msg, peer)
 
 	case 0x90: // Discreet log contract messages
 		if msg.MsgType() == lnutil.MSGID_DLC_OFFER {
@@ -121,12 +125,11 @@ func (nd *LitNode) LNDCReader(peer *RemotePeer) error {
 	}
 
 	for {
-
 		msg := make([]byte, 1<<24)
-		//	fmt.Printf("read message from %x\n", l.RemoteLNId)
+		//	log.Printf("read message from %x\n", l.RemoteLNId)
 		n, err := peer.Con.Read(msg)
 		if err != nil {
-			fmt.Printf("read error with %d: %s\n", peer.Idx, err.Error())
+			log.Printf("read error with %d: %s\n", peer.Idx, err.Error())
 			nd.RemoteMtx.Lock()
 			delete(nd.RemoteCons, peer.Idx)
 			nd.RemoteMtx.Unlock()
@@ -134,17 +137,19 @@ func (nd *LitNode) LNDCReader(peer *RemotePeer) error {
 		}
 		msg = msg[:n]
 
-		//fmt.Printf("decrypted message is %x\n", msg)
+		log.Printf("decrypted message is %x\n", msg)
 
 		var routedMsg lnutil.LitMsg
 		routedMsg, err = lnutil.LitMsgFromBytes(msg, peer.Idx)
 		if err != nil {
+			fmt.Printf("decoding message error with %d: %s\n", peer.Idx, err.Error())
 			return err
 		}
 
-		//fmt.Printf("peerIdx is %d\n", routedMsg.Peer())
-		//fmt.Printf("routed bytes %x\n", routedMsg.Bytes())
-		fmt.Printf("Received message [%x] from peer [%d]\n", routedMsg.MsgType(), routedMsg.Peer())
+		log.Printf("peerIdx is %d\n", routedMsg.Peer())
+		log.Printf("routed bytes %x\n", routedMsg.Bytes())
+
+		log.Printf("message type %x\n", routedMsg.MsgType())
 
 		var chanIdx uint32
 		chanIdx = 0
@@ -156,7 +161,7 @@ func (nd *LitNode) LNDCReader(peer *RemotePeer) error {
 			}
 		}
 
-		//fmt.Printf("chanIdx is %x\n", chanIdx)
+		log.Printf("chanIdx is %x\n", chanIdx)
 
 		if chanIdx != 0 {
 			err = nd.PeerHandler(routedMsg, peer.QCs[chanIdx], peer)
@@ -165,7 +170,7 @@ func (nd *LitNode) LNDCReader(peer *RemotePeer) error {
 		}
 
 		if err != nil {
-			fmt.Printf("PeerHandler error with %d: %s\n", peer.Idx, err.Error())
+			log.Printf("PeerHandler error with %d: %s\n", peer.Idx, err.Error())
 		}
 	}
 }
@@ -187,31 +192,75 @@ func (nd *LitNode) PopulateQchanMap(peer *RemotePeer) error {
 }
 
 func (nd *LitNode) ChannelHandler(msg lnutil.LitMsg, peer *RemotePeer) error {
+	if nd.InProgDual.PeerIdx != 0 { // a dual funding is in progress
+		nd.DualFundingHandler(msg, peer)
+		return nil
+	}
+
 	switch message := msg.(type) {
 	case lnutil.PointReqMsg: // POINT REQUEST
-		fmt.Printf("Got point request from %x\n", message.Peer())
+		log.Printf("Got point request from %x\n", message.Peer())
 		nd.PointReqHandler(message)
 		return nil
 
 	case lnutil.PointRespMsg: // POINT RESPONSE
-		fmt.Printf("Got point response from %x\n", msg.Peer())
+		log.Printf("Got point response from %x\n", msg.Peer())
 		return nd.PointRespHandler(message)
 
 	case lnutil.ChanDescMsg: // CHANNEL DESCRIPTION
-		fmt.Printf("Got channel description from %x\n", msg.Peer())
+		log.Printf("Got channel description from %x\n", msg.Peer())
 
 		nd.QChanDescHandler(message)
 		return nil
 
 	case lnutil.ChanAckMsg: // CHANNEL ACKNOWLEDGE
-		fmt.Printf("Got channel acknowledgement from %x\n", msg.Peer())
+		log.Printf("Got channel acknowledgement from %x\n", msg.Peer())
 
 		nd.QChanAckHandler(message, peer)
 		return nil
 
 	case lnutil.SigProofMsg: // HERE'S YOUR CHANNEL
-		fmt.Printf("Got channel proof from %x\n", msg.Peer())
+		log.Printf("Got channel proof from %x\n", msg.Peer())
 		nd.SigProofHandler(message, peer)
+		return nil
+
+	default:
+		return fmt.Errorf("Unknown message type %x", msg.MsgType())
+	}
+
+}
+
+func (nd *LitNode) DualFundingHandler(msg lnutil.LitMsg, peer *RemotePeer) error {
+	switch message := msg.(type) {
+	case lnutil.DualFundingReqMsg: // DUAL FUNDING REQUEST
+		fmt.Printf("Got dual funding request from %x\n", message.Peer())
+		nd.DualFundingReqHandler(message)
+		return nil
+
+	case lnutil.DualFundingAcceptMsg: // DUAL FUNDING ACCEPT
+		fmt.Printf("Got dual funding acceptance from %x\n", msg.Peer())
+		nd.DualFundingAcceptHandler(message)
+		return nil
+
+	case lnutil.DualFundingDeclMsg: // DUAL FUNDING DECLINE
+		fmt.Printf("Got dual funding decline from %x\n", msg.Peer())
+		nd.DualFundingDeclHandler(message)
+		return nil
+
+	case lnutil.ChanDescMsg: // CHANNEL DESCRIPTION
+		fmt.Printf("Got (dual funding) channel description from %x\n", msg.Peer())
+		nd.DualFundChanDescHandler(message)
+		return nil
+
+	case lnutil.DualFundingChanAckMsg: // CHANNEL ACKNOWLEDGE
+		fmt.Printf("Got (dual funding) channel acknowledgement from %x\n", msg.Peer())
+
+		nd.DualFundChanAckHandler(message, peer)
+		return nil
+
+	case lnutil.SigProofMsg: // HERE'S YOUR CHANNEL
+		fmt.Printf("Got (dual funding) channel proof from %x\n", msg.Peer())
+		nd.DualFundSigProofHandler(message, peer)
 		return nil
 
 	default:
@@ -224,13 +273,13 @@ func (nd *LitNode) CloseHandler(msg lnutil.LitMsg) error {
 	switch message := msg.(type) { // CLOSE REQ
 
 	case lnutil.CloseReqMsg:
-		fmt.Printf("Got close request from %x\n", msg.Peer())
+		log.Printf("Got close request from %x\n", msg.Peer())
 		nd.CloseReqHandler(message)
 		return nil
 
 	/* - not yet implemented
 	case lnutil.MSGID_CLOSERESP: // CLOSE RESP
-		fmt.Printf("Got close response from %x\n", from)
+		log.Printf("Got close response from %x\n", from)
 		nd.CloseRespHandler(from, msg[1:])
 		continue
 		return nil
@@ -244,21 +293,23 @@ func (nd *LitNode) CloseHandler(msg lnutil.LitMsg) error {
 // need a go routine for each qchan.
 
 func (nd *LitNode) PushPullHandler(routedMsg lnutil.LitMsg, q *Qchan) error {
+	q.ChanMtx.Lock()
+	defer q.ChanMtx.Unlock()
 	switch message := routedMsg.(type) {
 	case lnutil.DeltaSigMsg:
-		fmt.Printf("Got DELTASIG from %x\n", routedMsg.Peer())
+		log.Printf("Got DELTASIG from %x\n", routedMsg.Peer())
 		return nd.DeltaSigHandler(message, q)
 
 	case lnutil.SigRevMsg: // SIGNATURE AND REVOCATION
-		fmt.Printf("Got SIGREV from %x\n", routedMsg.Peer())
+		log.Printf("Got SIGREV from %x\n", routedMsg.Peer())
 		return nd.SigRevHandler(message, q)
 
 	case lnutil.GapSigRevMsg: // GAP SIGNATURE AND REVOCATION
-		fmt.Printf("Got GapSigRev from %x\n", routedMsg.Peer())
+		log.Printf("Got GapSigRev from %x\n", routedMsg.Peer())
 		return nd.GapSigRevHandler(message, q)
 
 	case lnutil.RevMsg: // REVOCATION
-		fmt.Printf("Got REV from %x\n", routedMsg.Peer())
+		log.Printf("Got REV from %x\n", routedMsg.Peer())
 		return nd.RevHandler(message, q)
 
 	default:
@@ -291,7 +342,7 @@ func (nd *LitNode) OPEventHandler(OPEventChan chan lnutil.OutPointEvent) {
 		// get all channels each time.  This is very inefficient!
 		qcs, err := nd.GetAllQchans()
 		if err != nil {
-			fmt.Printf("ln db error: %s", err.Error())
+			log.Printf("ln db error: %s", err.Error())
 			continue
 		}
 		var theQ *Qchan
@@ -307,7 +358,7 @@ func (nd *LitNode) OPEventHandler(OPEventChan chan lnutil.OutPointEvent) {
 			// Check if this is a contract output
 			contracts, err := nd.DlcManager.ListContracts()
 			if err != nil {
-				fmt.Printf("contract db error: %s\n", err.Error())
+				log.Printf("contract db error: %s\n", err.Error())
 				continue
 			}
 			for _, c := range contracts {
@@ -321,44 +372,44 @@ func (nd *LitNode) OPEventHandler(OPEventChan chan lnutil.OutPointEvent) {
 		if theC != nil {
 			err := nd.HandleContractOPEvent(theC, &curOPEvent)
 			if err != nil {
-				fmt.Printf("HandleContractOPEvent error: %s\n", err.Error())
+				log.Printf("HandleContractOPEvent error: %s\n", err.Error())
 			}
 			continue
 		}
 
 		// end if no associated channel
 		if theQ == nil {
-			fmt.Printf("OPEvent %s doesn't match any channel\n",
+			log.Printf("OPEvent %s doesn't match any channel\n",
 				curOPEvent.Op.String())
 			continue
 		}
 
 		// confirmation event
 		if curOPEvent.Tx == nil {
-			fmt.Printf("OP %s Confirmation event\n", curOPEvent.Op.String())
+			log.Printf("OP %s Confirmation event\n", curOPEvent.Op.String())
 			theQ.Height = curOPEvent.Height
 			err = nd.SaveQchanUtxoData(theQ)
 			if err != nil {
-				fmt.Printf("SaveQchanUtxoData error: %s", err.Error())
+				log.Printf("SaveQchanUtxoData error: %s", err.Error())
 				continue
 			}
 			// spend event (note: happens twice!)
 		} else {
-			fmt.Printf("OP %s Spend event\n", curOPEvent.Op.String())
+			log.Printf("OP %s Spend event\n", curOPEvent.Op.String())
 			// mark channel as closed
 			theQ.CloseData.Closed = true
 			theQ.CloseData.CloseTxid = curOPEvent.Tx.TxHash()
 			theQ.CloseData.CloseHeight = curOPEvent.Height
 			err = nd.SaveQchanUtxoData(theQ)
 			if err != nil {
-				fmt.Printf("SaveQchanUtxoData error: %s", err.Error())
+				log.Printf("SaveQchanUtxoData error: %s", err.Error())
 				continue
 			}
 
 			// detect close tx outs.
 			txos, err := theQ.GetCloseTxos(curOPEvent.Tx)
 			if err != nil {
-				fmt.Printf("GetCloseTxos error: %s", err.Error())
+				log.Printf("GetCloseTxos error: %s", err.Error())
 				continue
 			}
 			// if you have seq=1 txos, modify the privkey...
@@ -374,8 +425,10 @@ func (nd *LitNode) OPEventHandler(OPEventChan chan lnutil.OutPointEvent) {
 					elkScalar, portxo.KeyGen.PrivKey =
 						portxo.KeyGen.PrivKey, elkScalar
 
-					// TODO make sure this doesn't crash on nil wallet
-					privBase := nd.SubWallet[theQ.Coin()].GetPriv(portxo.KeyGen)
+					privBase, err := nd.SubWallet[theQ.Coin()].GetPriv(portxo.KeyGen)
+					if err != nil {
+						continue // or return?
+					}
 
 					portxo.PrivKey = lnutil.CombinePrivKeyAndSubtract(
 						privBase, elkScalar[:])
@@ -390,7 +443,7 @@ func (nd *LitNode) OPEventHandler(OPEventChan chan lnutil.OutPointEvent) {
 func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 	opEvent *lnutil.OutPointEvent) error {
 
-	fmt.Printf("Received OPEvent for contract %d!\n", c.Idx)
+	log.Printf("Received OPEvent for contract %d!\n", c.Idx)
 	if opEvent.Tx != nil {
 		wal, ok := nd.SubWallet[c.CoinType]
 		if !ok {
@@ -414,7 +467,7 @@ func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 			c.Status = lnutil.ContractStatusSettling
 			err := nd.DlcManager.SaveContract(c)
 			if err != nil {
-				fmt.Printf("HandleContractOPEvent SaveContract err %s\n", err.Error())
+				log.Printf("HandleContractOPEvent SaveContract err %s\n", err.Error())
 				return err
 			}
 
@@ -439,7 +492,7 @@ func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 			kg.Step[2] = UseContractPayoutPKH
 			kg.Step[3] = c.PeerIdx | 1<<31
 			kg.Step[4] = uint32(c.Idx) | 1<<31
-			priv := wal.GetPriv(kg)
+			priv, _ := wal.GetPriv(kg)
 
 			// make hash cache
 			hCache := txscript.NewTxSigHashes(txClaim)

@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/adiabat/btcd/wire"
+	"github.com/mit-dci/lit/wire"
 )
 
 type TxoMode uint8
@@ -141,7 +141,7 @@ func (u *PorTxo) Equal(z *PorTxo) bool {
 		return false
 	}
 
-	// if we're here, lenghts for both are the same.  Iterate and compare stacks
+	// if we're here, lengths for both are the same.  Iterate and compare stacks
 	for i, _ := range u.PreSigStack {
 		if !bytes.Equal(u.PreSigStack[i], z.PreSigStack[i]) {
 			return false

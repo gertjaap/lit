@@ -1,12 +1,13 @@
 package wallit
 
 import (
+	"fmt"
 	"log"
 	"sort"
 
-	"github.com/adiabat/btcd/btcec"
-	"github.com/adiabat/btcd/chaincfg/chainhash"
-	"github.com/adiabat/btcd/wire"
+	"github.com/mit-dci/lit/btcutil/btcd/btcec"
+	"github.com/mit-dci/lit/btcutil/btcd/chaincfg/chainhash"
+	"github.com/mit-dci/lit/wire"
 	"github.com/mit-dci/lit/coinparam"
 	"github.com/mit-dci/lit/lnutil"
 	"github.com/mit-dci/lit/portxo"
@@ -34,8 +35,12 @@ type UWallet interface {
 
 // --- implementation of BaseWallet interface ----
 
-func (w *Wallit) GetPriv(k portxo.KeyGen) *btcec.PrivateKey {
-	return w.PathPrivkey(k)
+func (w *Wallit) GetPriv(k portxo.KeyGen) (*btcec.PrivateKey, error) {
+	if w.PathPrivkey(k) != nil {
+		return w.PathPrivkey(k), nil
+	} else {
+		return nil, fmt.Errorf("Nil Wallet Error")
+	}
 }
 
 func (w *Wallit) GetPub(k portxo.KeyGen) *btcec.PublicKey {

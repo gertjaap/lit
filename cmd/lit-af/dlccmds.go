@@ -15,7 +15,7 @@ import (
 var dlcCommand = &Command{
 	Format: fmt.Sprintf("%s%s%s\n", lnutil.White("dlc"),
 		lnutil.ReqColor("subcommand"), lnutil.OptColor("parameters...")),
-	Description: fmt.Sprintf("%s%2\n%s\n%s\n",
+	Description: fmt.Sprintf("%s\n%s\n%s\n%s\n",
 		"Command for working with discreet log contracts. ",
 		"Subcommand can be one of:",
 		fmt.Sprintf("%-10s %s",
@@ -157,10 +157,10 @@ var viewContractCommand = &Command{
 }
 
 var viewContractPayoutCommand = &Command{
-	Format: fmt.Sprintf("%s%s%s%s\n", lnutil.White("dlc contract viewpayout"),
+	Format: fmt.Sprintf("%s%s%s%s%s\n", lnutil.White("dlc contract viewpayout"),
 		lnutil.ReqColor("id"), lnutil.ReqColor("start"),
 		lnutil.ReqColor("end"), lnutil.ReqColor("increment")),
-	Description: fmt.Sprintf("%s\n%s\n%s\n%s\n",
+	Description: fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n",
 		"Views the payout table of a contract",
 		fmt.Sprintf("%-10s %s",
 			lnutil.White("id"),
@@ -384,7 +384,7 @@ func (lc *litAfClient) DlcListOracles(textArgs []string) error {
 	args := new(litrpc.ListOraclesArgs)
 	reply := new(litrpc.ListOraclesReply)
 
-	err := lc.rpccon.Call("LitRPC.ListOracles", args, reply)
+	err := lc.Call("LitRPC.ListOracles", args, reply)
 	if err != nil {
 		return err
 	}
@@ -400,14 +400,9 @@ func (lc *litAfClient) DlcListOracles(textArgs []string) error {
 }
 
 func (lc *litAfClient) DlcImportOracle(textArgs []string) error {
-	if len(textArgs) > 0 && textArgs[0] == "-h" {
-		fmt.Fprintf(color.Output, importOracleCommand.Format)
-		fmt.Fprintf(color.Output, importOracleCommand.Description)
-		return nil
-	}
-
-	if len(textArgs) < 2 {
-		return fmt.Errorf(importOracleCommand.Format)
+	err := CheckHelpCommand(importOracleCommand, textArgs, 2)
+	if err != nil {
+		return err
 	}
 
 	args := new(litrpc.ImportOracleArgs)
@@ -416,7 +411,7 @@ func (lc *litAfClient) DlcImportOracle(textArgs []string) error {
 	args.Url = textArgs[0]
 	args.Name = textArgs[1]
 
-	err := lc.rpccon.Call("LitRPC.ImportOracle", args, reply)
+	err = lc.Call("LitRPC.ImportOracle", args, reply)
 	if err != nil {
 		return err
 	}
@@ -427,14 +422,13 @@ func (lc *litAfClient) DlcImportOracle(textArgs []string) error {
 }
 
 func (lc *litAfClient) DlcAddOracle(textArgs []string) error {
-	if len(textArgs) > 0 && textArgs[0] == "-h" {
-		fmt.Fprintf(color.Output, addOracleCommand.Format)
-		fmt.Fprintf(color.Output, addOracleCommand.Description)
-		return nil
+	err := CheckHelpCommand(addOracleCommand, textArgs, 2)
+	if err != nil {
+		return err
 	}
 
-	if len(textArgs) < 2 {
-		return fmt.Errorf(addOracleCommand.Format)
+	if err != nil {
+		return err
 	}
 
 	args := new(litrpc.AddOracleArgs)
@@ -443,7 +437,7 @@ func (lc *litAfClient) DlcAddOracle(textArgs []string) error {
 	args.Key = textArgs[0]
 	args.Name = textArgs[1]
 
-	err := lc.rpccon.Call("LitRPC.AddOracle", args, reply)
+	err = lc.Call("LitRPC.AddOracle", args, reply)
 	if err != nil {
 		return err
 	}
@@ -454,70 +448,75 @@ func (lc *litAfClient) DlcAddOracle(textArgs []string) error {
 }
 
 func (lc *litAfClient) DlcContract(textArgs []string) error {
-	if len(textArgs) > 0 && textArgs[0] == "-h" {
+	if len(textArgs) < 1 { // this shouldn't happen?
+		return fmt.Errorf("No argument specified")
+	}
+	cmd := textArgs[0]
+	textArgs = textArgs[1:]
+	if cmd == "-h" {
 		fmt.Fprintf(color.Output, contractCommand.Format)
 		fmt.Fprintf(color.Output, contractCommand.Description)
 		return nil
 	}
 
-	if len(textArgs) > 0 && textArgs[0] == "ls" {
-		return lc.DlcListContracts(textArgs[1:])
+	if cmd == "ls" {
+		return lc.DlcListContracts(textArgs)
 	}
 
-	if len(textArgs) > 0 && textArgs[0] == "new" {
-		return lc.DlcNewContract(textArgs[1:])
+	if cmd == "new" {
+		return lc.DlcNewContract(textArgs)
 	}
 
-	if len(textArgs) > 0 && textArgs[0] == "view" {
-		return lc.DlcViewContract(textArgs[1:])
+	if cmd == "view" {
+		return lc.DlcViewContract(textArgs)
 	}
 
-	if len(textArgs) > 0 && textArgs[0] == "viewpayout" {
-		return lc.DlcViewContractPayout(textArgs[1:])
+	if cmd == "viewpayout" {
+		return lc.DlcViewContractPayout(textArgs)
 	}
 
-	if len(textArgs) > 0 && textArgs[0] == "setoracle" {
-		return lc.DlcSetContractOracle(textArgs[1:])
+	if cmd == "setoracle" {
+		return lc.DlcSetContractOracle(textArgs)
 	}
 
-	if len(textArgs) > 0 && textArgs[0] == "setdatafeed" {
-		return lc.DlcSetContractDatafeed(textArgs[1:])
+	if cmd == "setdatafeed" {
+		return lc.DlcSetContractDatafeed(textArgs)
 	}
 
-	if len(textArgs) > 0 && textArgs[0] == "setrpoint" {
-		return lc.DlcSetContractRPoint(textArgs[1:])
+	if cmd == "setrpoint" {
+		return lc.DlcSetContractRPoint(textArgs)
 	}
 
-	if len(textArgs) > 0 && textArgs[0] == "settime" {
-		return lc.DlcSetContractSettlementTime(textArgs[1:])
+	if cmd == "settime" {
+		return lc.DlcSetContractSettlementTime(textArgs)
 	}
 
-	if len(textArgs) > 0 && textArgs[0] == "setfunding" {
-		return lc.DlcSetContractFunding(textArgs[1:])
+	if cmd == "setfunding" {
+		return lc.DlcSetContractFunding(textArgs)
 	}
 
-	if len(textArgs) > 0 && textArgs[0] == "setdivision" {
-		return lc.DlcSetContractDivision(textArgs[1:])
+	if cmd == "setdivision" {
+		return lc.DlcSetContractDivision(textArgs)
 	}
 
-	if len(textArgs) > 0 && textArgs[0] == "setcointype" {
-		return lc.DlcSetContractCoinType(textArgs[1:])
+	if cmd == "setcointype" {
+		return lc.DlcSetContractCoinType(textArgs)
 	}
 
-	if len(textArgs) > 0 && textArgs[0] == "offer" {
-		return lc.DlcOfferContract(textArgs[1:])
+	if cmd == "offer" {
+		return lc.DlcOfferContract(textArgs)
 	}
 
-	if len(textArgs) > 0 && textArgs[0] == "decline" {
-		return lc.DlcDeclineContract(textArgs[1:])
+	if cmd == "decline" {
+		return lc.DlcDeclineContract(textArgs)
 	}
 
-	if len(textArgs) > 0 && textArgs[0] == "accept" {
-		return lc.DlcAcceptContract(textArgs[1:])
+	if cmd == "accept" {
+		return lc.DlcAcceptContract(textArgs)
 	}
 
-	if len(textArgs) > 0 && textArgs[0] == "settle" {
-		return lc.DlcSettleContract(textArgs[1:])
+	if cmd == "settle" {
+		return lc.DlcSettleContract(textArgs)
 	}
 	return fmt.Errorf(contractCommand.Format)
 }
@@ -526,7 +525,7 @@ func (lc *litAfClient) DlcListContracts(textArgs []string) error {
 	args := new(litrpc.ListContractsArgs)
 	reply := new(litrpc.ListContractsReply)
 
-	err := lc.rpccon.Call("LitRPC.ListContracts", args, reply)
+	err := lc.Call("LitRPC.ListContracts", args, reply)
 	if err != nil {
 		return err
 	}
@@ -546,7 +545,7 @@ func (lc *litAfClient) DlcNewContract(textArgs []string) error {
 	args := new(litrpc.NewContractArgs)
 	reply := new(litrpc.NewContractReply)
 
-	err := lc.rpccon.Call("LitRPC.NewContract", args, reply)
+	err := lc.Call("LitRPC.NewContract", args, reply)
 	if err != nil {
 		return err
 	}
@@ -557,14 +556,9 @@ func (lc *litAfClient) DlcNewContract(textArgs []string) error {
 }
 
 func (lc *litAfClient) DlcViewContract(textArgs []string) error {
-	if len(textArgs) > 0 && textArgs[0] == "-h" {
-		fmt.Fprintf(color.Output, viewContractCommand.Format)
-		fmt.Fprintf(color.Output, viewContractCommand.Description)
-		return nil
-	}
-
-	if len(textArgs) < 1 {
-		return fmt.Errorf(viewContractCommand.Format)
+	err := CheckHelpCommand(viewContractCommand, textArgs, 1)
+	if err != nil {
+		return err
 	}
 
 	args := new(litrpc.GetContractArgs)
@@ -576,7 +570,7 @@ func (lc *litAfClient) DlcViewContract(textArgs []string) error {
 	}
 	args.Idx = cIdx
 
-	err = lc.rpccon.Call("LitRPC.GetContract", args, reply)
+	err = lc.Call("LitRPC.GetContract", args, reply)
 	if err != nil {
 		return err
 	}
@@ -586,14 +580,9 @@ func (lc *litAfClient) DlcViewContract(textArgs []string) error {
 }
 
 func (lc *litAfClient) DlcViewContractPayout(textArgs []string) error {
-	if len(textArgs) > 0 && textArgs[0] == "-h" {
-		fmt.Fprintf(color.Output, viewContractPayoutCommand.Format)
-		fmt.Fprintf(color.Output, viewContractPayoutCommand.Description)
-		return nil
-	}
-
-	if len(textArgs) < 4 {
-		return fmt.Errorf(viewContractPayoutCommand.Format)
+	err := CheckHelpCommand(viewContractPayoutCommand, textArgs, 4)
+	if err != nil {
+		return err
 	}
 
 	args := new(litrpc.GetContractArgs)
@@ -618,7 +607,7 @@ func (lc *litAfClient) DlcViewContractPayout(textArgs []string) error {
 
 	args.Idx = cIdx
 
-	err = lc.rpccon.Call("LitRPC.GetContract", args, reply)
+	err = lc.Call("LitRPC.GetContract", args, reply)
 	if err != nil {
 		return err
 	}
@@ -628,14 +617,9 @@ func (lc *litAfClient) DlcViewContractPayout(textArgs []string) error {
 }
 
 func (lc *litAfClient) DlcSetContractOracle(textArgs []string) error {
-	if len(textArgs) > 0 && textArgs[0] == "-h" {
-		fmt.Fprintf(color.Output, setContractOracleCommand.Format)
-		fmt.Fprintf(color.Output, setContractOracleCommand.Description)
-		return nil
-	}
-
-	if len(textArgs) < 2 {
-		return fmt.Errorf(setContractOracleCommand.Format)
+	err := CheckHelpCommand(setContractOracleCommand, textArgs, 2)
+	if err != nil {
+		return err
 	}
 
 	args := new(litrpc.SetContractOracleArgs)
@@ -652,7 +636,7 @@ func (lc *litAfClient) DlcSetContractOracle(textArgs []string) error {
 	args.CIdx = cIdx
 	args.OIdx = oIdx
 
-	err = lc.rpccon.Call("LitRPC.SetContractOracle", args, reply)
+	err = lc.Call("LitRPC.SetContractOracle", args, reply)
 	if err != nil {
 		return err
 	}
@@ -663,14 +647,9 @@ func (lc *litAfClient) DlcSetContractOracle(textArgs []string) error {
 }
 
 func (lc *litAfClient) DlcSetContractDatafeed(textArgs []string) error {
-	if len(textArgs) > 0 && textArgs[0] == "-h" {
-		fmt.Fprintf(color.Output, setContractDatafeedCommand.Format)
-		fmt.Fprintf(color.Output, setContractDatafeedCommand.Description)
-		return nil
-	}
-
-	if len(textArgs) < 2 {
-		return fmt.Errorf(setContractDatafeedCommand.Format)
+	err := CheckHelpCommand(setContractDatafeedCommand, textArgs, 2)
+	if err != nil {
+		return err
 	}
 
 	args := new(litrpc.SetContractDatafeedArgs)
@@ -687,7 +666,7 @@ func (lc *litAfClient) DlcSetContractDatafeed(textArgs []string) error {
 	args.CIdx = cIdx
 	args.Feed = feed
 
-	err = lc.rpccon.Call("LitRPC.SetContractDatafeed", args, reply)
+	err = lc.Call("LitRPC.SetContractDatafeed", args, reply)
 	if err != nil {
 		return err
 	}
@@ -698,14 +677,9 @@ func (lc *litAfClient) DlcSetContractDatafeed(textArgs []string) error {
 }
 
 func (lc *litAfClient) DlcSetContractRPoint(textArgs []string) error {
-	if len(textArgs) > 0 && textArgs[0] == "-h" {
-		fmt.Fprintf(color.Output, setContractRPointCommand.Format)
-		fmt.Fprintf(color.Output, setContractRPointCommand.Description)
-		return nil
-	}
-
-	if len(textArgs) < 2 {
-		return fmt.Errorf(setContractRPointCommand.Format)
+	err := CheckHelpCommand(setContractRPointCommand, textArgs, 2)
+	if err != nil {
+		return err
 	}
 
 	args := new(litrpc.SetContractRPointArgs)
@@ -722,7 +696,7 @@ func (lc *litAfClient) DlcSetContractRPoint(textArgs []string) error {
 	args.CIdx = cIdx
 	copy(args.RPoint[:], rPoint[:])
 
-	err = lc.rpccon.Call("LitRPC.SetContractRPoint", args, reply)
+	err = lc.Call("LitRPC.SetContractRPoint", args, reply)
 	if err != nil {
 		return err
 	}
@@ -733,14 +707,9 @@ func (lc *litAfClient) DlcSetContractRPoint(textArgs []string) error {
 }
 
 func (lc *litAfClient) DlcSetContractSettlementTime(textArgs []string) error {
-	if len(textArgs) > 0 && textArgs[0] == "-h" {
-		fmt.Fprintf(color.Output, setContractSettlementTimeCommand.Format)
-		fmt.Fprintf(color.Output, setContractSettlementTimeCommand.Description)
-		return nil
-	}
-
-	if len(textArgs) < 2 {
-		return fmt.Errorf(setContractSettlementTimeCommand.Format)
+	err := CheckHelpCommand(setContractSettlementTimeCommand, textArgs, 2)
+	if err != nil {
+		return err
 	}
 
 	args := new(litrpc.SetContractSettlementTimeArgs)
@@ -757,7 +726,7 @@ func (lc *litAfClient) DlcSetContractSettlementTime(textArgs []string) error {
 	args.CIdx = cIdx
 	args.Time = time
 
-	err = lc.rpccon.Call("LitRPC.SetContractSettlementTime", args, reply)
+	err = lc.Call("LitRPC.SetContractSettlementTime", args, reply)
 	if err != nil {
 		return err
 	}
@@ -768,14 +737,9 @@ func (lc *litAfClient) DlcSetContractSettlementTime(textArgs []string) error {
 }
 
 func (lc *litAfClient) DlcSetContractFunding(textArgs []string) error {
-	if len(textArgs) > 0 && textArgs[0] == "-h" {
-		fmt.Fprintf(color.Output, setContractFundingCommand.Format)
-		fmt.Fprintf(color.Output, setContractFundingCommand.Description)
-		return nil
-	}
-
-	if len(textArgs) < 3 {
-		return fmt.Errorf(setContractFundingCommand.Format)
+	err := CheckHelpCommand(setContractFundingCommand, textArgs, 3)
+	if err != nil {
+		return err
 	}
 
 	args := new(litrpc.SetContractFundingArgs)
@@ -797,7 +761,7 @@ func (lc *litAfClient) DlcSetContractFunding(textArgs []string) error {
 	args.OurAmount = ourAmount
 	args.TheirAmount = theirAmount
 
-	err = lc.rpccon.Call("LitRPC.SetContractFunding", args, reply)
+	err = lc.Call("LitRPC.SetContractFunding", args, reply)
 	if err != nil {
 		return err
 	}
@@ -808,14 +772,9 @@ func (lc *litAfClient) DlcSetContractFunding(textArgs []string) error {
 }
 
 func (lc *litAfClient) DlcSetContractCoinType(textArgs []string) error {
-	if len(textArgs) > 0 && textArgs[0] == "-h" {
-		fmt.Fprintf(color.Output, setContractCoinTypeCommand.Format)
-		fmt.Fprintf(color.Output, setContractCoinTypeCommand.Description)
-		return nil
-	}
-
-	if len(textArgs) < 2 {
-		return fmt.Errorf(setContractCoinTypeCommand.Format)
+	err := CheckHelpCommand(setContractCoinTypeCommand, textArgs, 2)
+	if err != nil {
+		return err
 	}
 
 	args := new(litrpc.SetContractCoinTypeArgs)
@@ -833,7 +792,7 @@ func (lc *litAfClient) DlcSetContractCoinType(textArgs []string) error {
 	args.CIdx = cIdx
 	args.CoinType = uint32(cointype)
 
-	err = lc.rpccon.Call("LitRPC.SetContractCoinType", args, reply)
+	err = lc.Call("LitRPC.SetContractCoinType", args, reply)
 	if err != nil {
 		return err
 	}
@@ -844,14 +803,9 @@ func (lc *litAfClient) DlcSetContractCoinType(textArgs []string) error {
 }
 
 func (lc *litAfClient) DlcSetContractDivision(textArgs []string) error {
-	if len(textArgs) > 0 && textArgs[0] == "-h" {
-		fmt.Fprintf(color.Output, setContractDivisionCommand.Format)
-		fmt.Fprintf(color.Output, setContractDivisionCommand.Description)
-		return nil
-	}
-
-	if len(textArgs) < 3 {
-		return fmt.Errorf(setContractDivisionCommand.Format)
+	err := CheckHelpCommand(setContractDivisionCommand, textArgs, 3)
+	if err != nil {
+		return err
 	}
 
 	args := new(litrpc.SetContractDivisionArgs)
@@ -873,7 +827,7 @@ func (lc *litAfClient) DlcSetContractDivision(textArgs []string) error {
 	args.ValueFullyOurs = fullyOurs
 	args.ValueFullyTheirs = fullyTheirs
 
-	err = lc.rpccon.Call("LitRPC.SetContractDivision", args, reply)
+	err = lc.Call("LitRPC.SetContractDivision", args, reply)
 	if err != nil {
 		return err
 	}
@@ -884,14 +838,9 @@ func (lc *litAfClient) DlcSetContractDivision(textArgs []string) error {
 }
 
 func (lc *litAfClient) DlcOfferContract(textArgs []string) error {
-	if len(textArgs) > 0 && textArgs[0] == "-h" {
-		fmt.Fprintf(color.Output, offerContractCommand.Format)
-		fmt.Fprintf(color.Output, offerContractCommand.Description)
-		return nil
-	}
-
-	if len(textArgs) < 2 {
-		return fmt.Errorf(offerContractCommand.Format)
+	err := CheckHelpCommand(offerContractCommand, textArgs, 2)
+	if err != nil {
+		return err
 	}
 
 	args := new(litrpc.OfferContractArgs)
@@ -909,7 +858,7 @@ func (lc *litAfClient) DlcOfferContract(textArgs []string) error {
 	args.CIdx = cIdx
 	args.PeerIdx = uint32(peerIdx)
 
-	err = lc.rpccon.Call("LitRPC.OfferContract", args, reply)
+	err = lc.Call("LitRPC.OfferContract", args, reply)
 	if err != nil {
 		return err
 	}
@@ -920,14 +869,9 @@ func (lc *litAfClient) DlcOfferContract(textArgs []string) error {
 }
 
 func (lc *litAfClient) DlcDeclineContract(textArgs []string) error {
-	if len(textArgs) > 0 && textArgs[0] == "-h" {
-		fmt.Fprintf(color.Output, declineContractCommand.Format)
-		fmt.Fprintf(color.Output, declineContractCommand.Description)
-		return nil
-	}
-
-	if len(textArgs) < 1 {
-		return fmt.Errorf(declineContractCommand.Format)
+	err := CheckHelpCommand(declineContractCommand, textArgs, 1)
+	if err != nil {
+		return err
 	}
 
 	args := new(litrpc.DeclineContractArgs)
@@ -940,7 +884,7 @@ func (lc *litAfClient) DlcDeclineContract(textArgs []string) error {
 
 	args.CIdx = cIdx
 
-	err = lc.rpccon.Call("LitRPC.DeclineContract", args, reply)
+	err = lc.Call("LitRPC.DeclineContract", args, reply)
 	if err != nil {
 		return err
 	}
@@ -951,14 +895,9 @@ func (lc *litAfClient) DlcDeclineContract(textArgs []string) error {
 }
 
 func (lc *litAfClient) DlcAcceptContract(textArgs []string) error {
-	if len(textArgs) > 0 && textArgs[0] == "-h" {
-		fmt.Fprintf(color.Output, acceptContractCommand.Format)
-		fmt.Fprintf(color.Output, acceptContractCommand.Description)
-		return nil
-	}
-
-	if len(textArgs) < 1 {
-		return fmt.Errorf(acceptContractCommand.Format)
+	err := CheckHelpCommand(acceptContractCommand, textArgs, 1)
+	if err != nil {
+		return err
 	}
 
 	args := new(litrpc.AcceptContractArgs)
@@ -971,7 +910,7 @@ func (lc *litAfClient) DlcAcceptContract(textArgs []string) error {
 
 	args.CIdx = cIdx
 
-	err = lc.rpccon.Call("LitRPC.AcceptContract", args, reply)
+	err = lc.Call("LitRPC.AcceptContract", args, reply)
 	if err != nil {
 		return err
 	}
@@ -982,14 +921,9 @@ func (lc *litAfClient) DlcAcceptContract(textArgs []string) error {
 }
 
 func (lc *litAfClient) DlcSettleContract(textArgs []string) error {
-	if len(textArgs) > 0 && textArgs[0] == "-h" {
-		fmt.Fprintf(color.Output, settleContractCommand.Format)
-		fmt.Fprintf(color.Output, settleContractCommand.Description)
-		return nil
-	}
-
-	if len(textArgs) < 3 {
-		return fmt.Errorf(settleContractCommand.Format)
+	err := CheckHelpCommand(settleContractCommand, textArgs, 3)
+	if err != nil {
+		return err
 	}
 
 	args := new(litrpc.SettleContractArgs)
@@ -1015,7 +949,7 @@ func (lc *litAfClient) DlcSettleContract(textArgs []string) error {
 
 	copy(args.OracleSig[:], oracleSigBytes)
 
-	err = lc.rpccon.Call("LitRPC.SettleContract", args, reply)
+	err = lc.Call("LitRPC.SettleContract", args, reply)
 	if err != nil {
 		return err
 	}

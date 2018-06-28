@@ -1,0 +1,67 @@
+diff --git a/Dockerfile b/Dockerfile
+index 417f0e3..e7f9b7c 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -13,6 +13,7 @@ WORKDIR /usr/local/go/src/github.com/mit-dci/lit/cmd/lit-af
+ RUN go build
+ 
+ FROM alpine
++RUN apk add --no-cache ca-certificates
+ WORKDIR /app
+ RUN cd /app
+ COPY --from=build /usr/local/go/src/github.com/mit-dci/lit/lit /app/bin/lit
+diff --git a/lit.go b/lit.go
+index 2823460..1b58130 100644
+--- a/lit.go
++++ b/lit.go
+@@ -32,6 +32,7 @@ type config struct { // define a struct for usage with go-flags
+ 	Verbose bool `short:"v" long:"verbose" description:"Set verbosity to true."`
+ 
+ 	Rpcport uint16 `short:"p" long:"rpcport" description:"Set RPC port to connect to"`
++	Rpchost string `short:"h" long:"rpchost" description:"Set RPC host to listen to"`
+ 
+ 	Params *coinparam.Params
+ }
+@@ -43,6 +44,7 @@ var (
+ 	defaultConfigFilename = "lit.conf"
+ 	defaultHomeDir        = os.Getenv("HOME")
+ 	defaultRpcport        = uint16(8001)
++	defaultRpchost        = "localhost"
+ )
+ 
+ func fileExists(name string) bool {
+@@ -134,6 +136,7 @@ func main() {
+ 	conf := config{
+ 		LitHomeDir: defaultLitHomeDirName,
+ 		Rpcport:    defaultRpcport,
++		Rpchost:    defaultRpchost,
+ 		TrackerURL: defaultTrackerURL,
+ 	}
+ 
+@@ -156,7 +159,7 @@ func main() {
+ 	rpcl.Node = node
+ 	rpcl.OffButton = make(chan bool, 1)
+ 
+-	go litrpc.RPCListen(rpcl, conf.Rpcport)
++	go litrpc.RPCListen(rpcl, conf.Rpchost, conf.Rpcport)
+ 	litbamf.BamfListen(conf.Rpcport, conf.LitHomeDir)
+ 
+ 	<-rpcl.OffButton
+diff --git a/litrpc/listener.go b/litrpc/listener.go
+index 90ab6d4..ed2bb62 100644
+--- a/litrpc/listener.go
++++ b/litrpc/listener.go
+@@ -42,11 +42,11 @@ func serveWS(ws *websocket.Conn) {
+ 	jsonrpc.ServeConn(ws)
+ }
+ 
+-func RPCListen(rpcl *LitRPC, port uint16) {
++func RPCListen(rpcl *LitRPC, host string, port uint16) {
+ 
+ 	rpc.Register(rpcl)
+ 
+-	listenString := fmt.Sprintf("localhost:%d", port)
++	listenString := fmt.Sprintf("%s:%d", host, port)
+ 
+ 	http.Handle("/ws", websocket.Handler(serveWS))
+ 	log.Fatal(http.ListenAndServe(listenString, nil))

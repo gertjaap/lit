@@ -2,9 +2,11 @@ package qln
 
 import (
 	"fmt"
+	"log"
 	"path/filepath"
 
-	"github.com/adiabat/btcutil/hdkeychain"
+	"github.com/mit-dci/lit/btcutil"
+	"github.com/mit-dci/lit/btcutil/hdkeychain"
 	"github.com/boltdb/bolt"
 	"github.com/mit-dci/lit/coinparam"
 	"github.com/mit-dci/lit/dlc"
@@ -16,7 +18,7 @@ import (
 
 // Init starts up a lit node.  Needs priv key, and a path.
 // Does not activate a subwallet; do that after init.
-func NewLitNode(privKey *[32]byte, path string, trackerURL string) (*LitNode, error) {
+func NewLitNode(privKey *[32]byte, path string, trackerURL string, proxyURL string) (*LitNode, error) {
 
 	nd := new(LitNode)
 	nd.LitFolder = path
@@ -48,6 +50,8 @@ func NewLitNode(privKey *[32]byte, path string, trackerURL string) (*LitNode, er
 
 	nd.TrackerURL = trackerURL
 
+	nd.ProxyURL = proxyURL
+
 	nd.InitRouting()
 
 	// optional tower activation
@@ -66,12 +70,16 @@ func NewLitNode(privKey *[32]byte, path string, trackerURL string) (*LitNode, er
 	nd.InProg = new(InFlightFund)
 	nd.InProg.done = make(chan uint32, 1)
 
+	nd.InProgDual = new(InFlightDualFund)
+	nd.InProgDual.done = make(chan *DualFundingResult, 1)
+
 	nd.RemoteCons = make(map[uint32]*RemotePeer)
 
 	nd.SubWallet = make(map[uint32]UWallet)
 
 	nd.OmniOut = make(chan lnutil.LitMsg, 10)
 	nd.OmniIn = make(chan lnutil.LitMsg, 10)
+
 	//	go nd.OmniHandler()
 	go nd.OutMessager()
 
@@ -110,6 +118,23 @@ func (nd *LitNode) LinkBaseWallet(
 	// be the first & default
 	nd.SubWallet[WallitIdx] = wallit.NewWallit(
 		rootpriv, birthHeight, resync, host, nd.LitFolder, param)
+
+	// re-register channel addresses
+	qChans, err := nd.GetAllQchans()
+	if err != nil {
+		return err
+	}
+
+	for _, qChan := range qChans {
+		var pkh [20]byte
+		pkhSlice := btcutil.Hash160(qChan.MyRefundPub[:])
+		copy(pkh[:], pkhSlice)
+		nd.SubWallet[WallitIdx].ExportHook().RegisterAddress(pkh)
+
+		log.Printf("Registering outpoint %v", qChan.PorTxo.Op)
+
+		nd.SubWallet[WallitIdx].WatchThis(qChan.PorTxo.Op)
+	}
 
 	go nd.OPEventHandler(nd.SubWallet[WallitIdx].LetMeKnow())
 
