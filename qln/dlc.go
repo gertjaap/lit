@@ -26,18 +26,18 @@ func (nd *LitNode) AddContract() (*lnutil.DlcContract, error) {
 }
 
 func (nd *LitNode) DlcSendDraftOffer(oIdx uint64) error {
-	fmt.Printf("Loading Offer: %d\n", oIdx)
+	log.Printf("Loading Offer: %d\n", oIdx)
 
 	o, err := nd.DlcManager.LoadOffer(oIdx)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Creating new msg from Offer: %d\n", o.Idx())
+	log.Printf("Creating new msg from Offer: %d\n", o.Idx())
 
 	msg := lnutil.NewDlcDraftOfferMsg(o.Peer(), o)
 
-	fmt.Printf("Sending offer\n")
+	log.Printf("Sending offer\n")
 	nd.OmniOut <- msg
 
 	return nil
@@ -97,7 +97,7 @@ func (nd *LitNode) DlcAcceptDraftOffer(oIdx uint64) error {
 
 func (nd *LitNode) DlcDraftOfferDeclineHandler(msg lnutil.DlcDraftOfferDeclineMsg, peer *RemotePeer) error {
 
-	fmt.Printf("Received decline for offer: %d\n", msg.Idx)
+	log.Printf("Received decline for offer: %d\n", msg.Idx)
 
 	// Drop the offer since it's been declined, we no longer need it.
 	nd.DlcManager.DeleteOffer(msg.Idx)
@@ -334,7 +334,7 @@ func (nd *LitNode) DlcOfferHandler(msg lnutil.DlcOfferMsg, peer *RemotePeer) err
 	err := nd.DlcManager.SaveContract(c)
 	if err != nil {
 		log.Printf("DlcOfferHandler SaveContract err %s\n", err.Error())
-		return
+		return err
 	}
 
 	_, ok := nd.SubWallet[msg.Contract.CoinType]
@@ -347,14 +347,14 @@ func (nd *LitNode) DlcOfferHandler(msg lnutil.DlcOfferMsg, peer *RemotePeer) err
 	// Oracle and payout data, then we can accept it automatically.
 	offers, err := nd.DlcManager.ListOffers()
 	if err != nil {
-		fmt.Printf("DlcOfferHandler ListOffers err %s\n", err.Error())
+		log.Printf("DlcOfferHandler ListOffers err %s\n", err.Error())
 		return err
 	}
 
 	for _, o := range offers {
 		if o.IsAccepted() {
 			if o.EqualsContract(c) {
-				fmt.Printf("Auto accepting contract %d based on offer %d\n", c.Idx, o.Idx())
+				log.Printf("Auto accepting contract %d based on offer %d\n", c.Idx, o.Idx())
 				nd.AcceptDlc(c.Idx)
 				nd.DlcManager.DeleteOffer(o.Idx())
 				break
@@ -368,14 +368,14 @@ func (nd *LitNode) DlcDeclineHandler(msg lnutil.DlcOfferDeclineMsg, peer *Remote
 	c, err := nd.DlcManager.LoadContract(msg.Idx)
 	if err != nil {
 		log.Printf("DlcDeclineHandler FindContract err %s\n", err.Error())
-		return
+		return err
 	}
 
 	c.Status = lnutil.ContractStatusDeclined
 	err = nd.DlcManager.SaveContract(c)
 	if err != nil {
 		log.Printf("DlcDeclineHandler SaveContract err %s\n", err.Error())
-		return
+		return err
 	}
 	return nil
 }
@@ -428,7 +428,7 @@ func (nd *LitNode) DlcContractAckHandler(msg lnutil.DlcContractAckMsg, peer *Rem
 	c, err := nd.DlcManager.LoadContract(msg.Idx)
 	if err != nil {
 		log.Printf("DlcContractAckHandler FindContract err %s\n", err.Error())
-		return
+		return err
 	}
 
 	// TODO: Check signatures
@@ -438,26 +438,26 @@ func (nd *LitNode) DlcContractAckHandler(msg lnutil.DlcContractAckMsg, peer *Rem
 	err = nd.DlcManager.SaveContract(c)
 	if err != nil {
 		log.Printf("DlcContractAckHandler SaveContract err %s\n", err.Error())
-		return
+		return err
 	}
 
 	// We have everything now, send our signatures to the funding TX
 	wal, ok := nd.SubWallet[c.CoinType]
 	if !ok {
 		log.Printf("DlcContractAckHandler No wallet for cointype %d\n", c.CoinType)
-		return
+		return err
 	}
 
 	tx, err := nd.BuildDlcFundingTransaction(c)
 	if err != nil {
 		log.Printf("DlcContractAckHandler BuildDlcFundingTransaction err %s\n", err.Error())
-		return
+		return err
 	}
 
 	err = wal.SignMyInputs(&tx)
 	if err != nil {
 		log.Printf("DlcContractAckHandler SignMyInputs err %s\n", err.Error())
-		return
+		return err
 	}
 
 	outMsg := lnutil.NewDlcContractFundingSigsMsg(c, &tx)
@@ -470,7 +470,7 @@ func (nd *LitNode) DlcFundingSigsHandler(msg lnutil.DlcContractFundingSigsMsg, p
 	c, err := nd.DlcManager.LoadContract(msg.Idx)
 	if err != nil {
 		log.Printf("DlcFundingSigsHandler FindContract err %s\n", err.Error())
-		return
+		return err
 	}
 
 	// TODO: Check signatures
@@ -479,32 +479,32 @@ func (nd *LitNode) DlcFundingSigsHandler(msg lnutil.DlcContractFundingSigsMsg, p
 	wal, ok := nd.SubWallet[c.CoinType]
 	if !ok {
 		log.Printf("DlcFundingSigsHandler No wallet for cointype %d\n", c.CoinType)
-		return
+		return err
 	}
 
 	err = wal.SignMyInputs(msg.SignedFundingTx)
 	if err != nil {
-		fmt.Printf("DlcFundingSigsHandler SignMyInputs err %s\n", err.Error())
+		log.Printf("DlcFundingSigsHandler SignMyInputs err %s\n", err.Error())
 		return err
 	}
 
 	err = wal.DirectSendTx(msg.SignedFundingTx)
 	if err != nil {
-		fmt.Printf("DlcFundingSigsHandler DirectSendTx err %s\n", err.Error())
+		log.Printf("DlcFundingSigsHandler DirectSendTx err %s\n", err.Error())
 		return err
 	}
 
 	err = wal.WatchThis(c.FundingOutpoint)
 	if err != nil {
 		log.Printf("DlcFundingSigsHandler WatchThis err %s\n", err.Error())
-		return
+		return err
 	}
 
 	c.Status = lnutil.ContractStatusActive
 	err = nd.DlcManager.SaveContract(c)
 	if err != nil {
 		log.Printf("DlcFundingSigsHandler SaveContract err %s\n", err.Error())
-		return
+		return err
 	}
 
 	outMsg := lnutil.NewDlcContractSigProofMsg(c, msg.SignedFundingTx)
@@ -517,27 +517,27 @@ func (nd *LitNode) DlcSigProofHandler(msg lnutil.DlcContractSigProofMsg, peer *R
 	c, err := nd.DlcManager.LoadContract(msg.Idx)
 	if err != nil {
 		log.Printf("DlcSigProofHandler FindContract err %s\n", err.Error())
-		return
+		return err
 	}
 
 	// TODO: Check signatures
 	wal, ok := nd.SubWallet[c.CoinType]
 	if !ok {
 		log.Printf("DlcSigProofHandler No wallet for cointype %d\n", c.CoinType)
-		return
+		return err
 	}
 
 	err = wal.WatchThis(c.FundingOutpoint)
 	if err != nil {
 		log.Printf("DlcSigProofHandler WatchThis err %s\n", err.Error())
-		return
+		return err
 	}
 
 	c.Status = lnutil.ContractStatusActive
 	err = nd.DlcManager.SaveContract(c)
 	if err != nil {
 		log.Printf("DlcSigProofHandler SaveContract err %s\n", err.Error())
-		return
+		return err
 	}
 	return nil
 }
