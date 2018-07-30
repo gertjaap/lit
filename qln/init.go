@@ -68,6 +68,7 @@ func NewLitNode(privKey *[32]byte, path string, trackerURL string, proxyURL stri
 
 	// make maps and channels
 	nd.UserMessageBox = make(chan string, 32)
+	nd.EventListeners = make([]chan lnutil.LitEvent, 0)
 
 	nd.InProg = new(InFlightFund)
 	nd.InProg.done = make(chan uint32, 1)
@@ -123,8 +124,8 @@ func (nd *LitNode) LinkBaseWallet(
 		rootpriv, birthHeight, resync, host, nd.LitFolder, proxy, param)
 
 	if err != nil {
-		 log.Println(err)
-		 return nil
+		log.Println(err)
+		return nil
 	}
 
 	if nd.ConnectedCoinTypes == nil {
