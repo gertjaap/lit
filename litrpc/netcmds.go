@@ -124,6 +124,19 @@ func (r *LitRPC) GetListeningPorts(args NoArgs, reply *ListeningPortsReply) erro
 	return nil
 }
 
+type EventReply struct {
+	Event lnutil.LitEvent
+}
+
+// ------- receive events
+func (r *LitRPC) GetEvent(args NoArgs, reply *EventReply) error {
+	receiveChan := make(chan lnutil.LitEvent)
+	r.Node.RegisterEventListener(receiveChan)
+	reply.Event = <-receiveChan
+	r.Node.UnregisterEventListener(receiveChan)
+	return nil
+}
+
 // ------- receive chat
 func (r *LitRPC) GetMessages(args NoArgs, reply *StatusReply) error {
 	reply.Status = <-r.Node.UserMessageBox

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/mit-dci/lit/wire"
 	"github.com/mit-dci/lit/consts"
 	"github.com/mit-dci/lit/lnutil"
+	"github.com/mit-dci/lit/wire"
 )
 
 // Grab the coins that are rightfully yours! Plus some more.
@@ -418,6 +418,8 @@ func (nd *LitNode) DeltaSigHandler(msg lnutil.DeltaSigMsg, qc *Qchan) error {
 	if err != nil {
 		return fmt.Errorf("DeltaSigHandler err %s", err.Error())
 	}
+
+	nd.SendEvent(lnutil.LitEvent{lnutil.LitEventTypeChannelPushReceived})
 
 	// (seems odd, but everything so far we still do in case of collision, so
 	// only check here.  If it's a collision, set, save, send gapSigRev

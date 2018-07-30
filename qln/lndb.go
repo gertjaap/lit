@@ -6,15 +6,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mit-dci/lit/btcutil/btcec"
-	"github.com/mit-dci/lit/wire"
-	"github.com/mit-dci/lit/btcutil"
 	"github.com/boltdb/bolt"
+	"github.com/mit-dci/lit/btcutil"
+	"github.com/mit-dci/lit/btcutil/btcec"
 	"github.com/mit-dci/lit/dlc"
 	"github.com/mit-dci/lit/elkrem"
 	"github.com/mit-dci/lit/lndc"
 	"github.com/mit-dci/lit/lnutil"
 	"github.com/mit-dci/lit/watchtower"
+	"github.com/mit-dci/lit/wire"
 )
 
 /*
@@ -106,8 +106,8 @@ type LitNode struct {
 	DefaultCoin uint32
 
 	ConnectedCoinTypes map[uint32]bool
-	RemoteCons map[uint32]*RemotePeer
-	RemoteMtx  sync.Mutex
+	RemoteCons         map[uint32]*RemotePeer
+	RemoteMtx          sync.Mutex
 
 	// WatchCon is currently just for the watchtower
 	WatchCon *lndc.LNDConn // merge these later
@@ -126,6 +126,9 @@ type LitNode struct {
 	// Nodes don't have Params; their SubWallets do
 	// Param *chaincfg.Params // network parameters (testnet3, segnet, etc)
 
+	EventListenersMtx sync.Mutex
+	EventListeners    []chan lnutil.LitEvent
+
 	// queue for async messages to RPC user
 	UserMessageBox chan string
 
@@ -141,7 +144,7 @@ type LitNode struct {
 
 	// Contains the URL string to connect to a SOCKS5 proxy, if provided
 	ProxyURL string
-	Nat string
+	Nat      string
 }
 
 type RemotePeer struct {
