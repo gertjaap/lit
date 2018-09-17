@@ -342,6 +342,9 @@ type ChanDescMsg struct {
 	Capacity    int64
 	InitPayment int64
 
+	// Elk to start with - allows breaking right after funding
+	Elk *chainhash.Hash
+
 	ElkZero [33]byte //consider changing into array in future
 	ElkOne  [33]byte
 	ElkTwo  [33]byte
@@ -354,6 +357,7 @@ func NewChanDescMsg(
 	pubkey, refund, hakd [33]byte, nextHTLCBase [33]byte, N2HTLCBase [33]byte,
 	cointype uint32,
 	capacity int64, payment int64,
+	ELK *chainhash.Hash,
 	ELKZero, ELKOne, ELKTwo [33]byte, data [32]byte) ChanDescMsg {
 
 	cd := new(ChanDescMsg)
@@ -367,6 +371,7 @@ func NewChanDescMsg(
 	cd.CoinType = cointype
 	cd.Capacity = capacity
 	cd.InitPayment = payment
+	cd.Elk = ELK
 	cd.ElkZero = ELKZero
 	cd.ElkOne = ELKOne
 	cd.ElkTwo = ELKTwo
@@ -394,6 +399,13 @@ func NewChanDescMsgFromBytes(b []byte, peerid uint32) (ChanDescMsg, error) {
 	cm.CoinType = BtU32(buf.Next(4))
 	cm.Capacity = BtI64(buf.Next(8))
 	cm.InitPayment = BtI64(buf.Next(8))
+
+	var err error
+	cm.Elk, err = chainhash.NewHash(buf.Next(32))
+	if err != nil {
+		return *cm, err
+	}
+
 	copy(cm.ElkZero[:], buf.Next(33))
 	copy(cm.ElkOne[:], buf.Next(33))
 	copy(cm.ElkTwo[:], buf.Next(33))
@@ -419,6 +431,7 @@ func (self ChanDescMsg) Bytes() []byte {
 	msg = append(msg, coinTypeBin[:]...)
 	msg = append(msg, capBin[:]...)
 	msg = append(msg, initBin[:]...)
+	msg = append(msg, self.Elk[:]...)
 	msg = append(msg, self.ElkZero[:]...)
 	msg = append(msg, self.ElkOne[:]...)
 	msg = append(msg, self.ElkTwo[:]...)
@@ -433,16 +446,18 @@ func (self ChanDescMsg) MsgType() uint8 { return MSGID_CHANDESC }
 type ChanAckMsg struct {
 	PeerIdx   uint32
 	Outpoint  wire.OutPoint
+	Elk       *chainhash.Hash
 	ElkZero   [33]byte
 	ElkOne    [33]byte
 	ElkTwo    [33]byte
 	Signature [64]byte
 }
 
-func NewChanAckMsg(peerid uint32, OP wire.OutPoint, ELKZero [33]byte, ELKOne [33]byte, ELKTwo [33]byte, SIG [64]byte) ChanAckMsg {
+func NewChanAckMsg(peerid uint32, OP wire.OutPoint, ELK *chainhash.Hash, ELKZero [33]byte, ELKOne [33]byte, ELKTwo [33]byte, SIG [64]byte) ChanAckMsg {
 	ca := new(ChanAckMsg)
 	ca.PeerIdx = peerid
 	ca.Outpoint = OP
+	ca.Elk = ELK
 	ca.ElkZero = ELKZero
 	ca.ElkOne = ELKOne
 	ca.ElkTwo = ELKTwo
@@ -463,6 +478,13 @@ func NewChanAckMsgFromBytes(b []byte, peerid uint32) (ChanAckMsg, error) {
 	var op [36]byte
 	copy(op[:], buf.Next(36))
 	cm.Outpoint = *OutPointFromBytes(op)
+
+	var err error
+	cm.Elk, err = chainhash.NewHash(buf.Next(32))
+	if err != nil {
+		return *cm, err
+	}
+
 	copy(cm.ElkZero[:], buf.Next(33))
 	copy(cm.ElkOne[:], buf.Next(33))
 	copy(cm.ElkTwo[:], buf.Next(33))
@@ -475,6 +497,7 @@ func (self ChanAckMsg) Bytes() []byte {
 	opArr := OutPointToBytes(self.Outpoint)
 	msg = append(msg, self.MsgType())
 	msg = append(msg, opArr[:]...)
+	msg = append(msg, self.Elk[:]...)
 	msg = append(msg, self.ElkZero[:]...)
 	msg = append(msg, self.ElkOne[:]...)
 	msg = append(msg, self.ElkTwo[:]...)
@@ -1545,6 +1568,7 @@ func (self DualFundingAcceptMsg) MsgType() uint8 { return MSGID_DUALFUNDINGACCEP
 type DualFundingChanAckMsg struct {
 	PeerIdx         uint32
 	Outpoint        wire.OutPoint
+	Elk             *chainhash.Hash
 	ElkZero         [33]byte
 	ElkOne          [33]byte
 	ElkTwo          [33]byte
@@ -1552,10 +1576,11 @@ type DualFundingChanAckMsg struct {
 	SignedFundingTx *wire.MsgTx
 }
 
-func NewDualFundingChanAckMsg(peerid uint32, OP wire.OutPoint, ELKZero [33]byte, ELKOne [33]byte, ELKTwo [33]byte, SIG [64]byte, signedFundingTx *wire.MsgTx) DualFundingChanAckMsg {
+func NewDualFundingChanAckMsg(peerid uint32, OP wire.OutPoint, ELK *chainhash.Hash, ELKZero [33]byte, ELKOne [33]byte, ELKTwo [33]byte, SIG [64]byte, signedFundingTx *wire.MsgTx) DualFundingChanAckMsg {
 	ca := new(DualFundingChanAckMsg)
 	ca.PeerIdx = peerid
 	ca.Outpoint = OP
+	ca.Elk = ELK
 	ca.ElkZero = ELKZero
 	ca.ElkOne = ELKOne
 	ca.ElkTwo = ELKTwo
@@ -1577,6 +1602,12 @@ func NewDualFundingChanAckMsgFromBytes(b []byte, peerid uint32) (DualFundingChan
 	var op [36]byte
 	copy(op[:], buf.Next(36))
 	cm.Outpoint = *OutPointFromBytes(op)
+
+	var err error
+	cm.Elk, err = chainhash.NewHash(buf.Next(32))
+	if err != nil {
+		return *cm, err
+	}
 	copy(cm.ElkZero[:], buf.Next(33))
 	copy(cm.ElkOne[:], buf.Next(33))
 	copy(cm.ElkTwo[:], buf.Next(33))
@@ -1602,6 +1633,7 @@ func (self DualFundingChanAckMsg) Bytes() []byte {
 	opArr := OutPointToBytes(self.Outpoint)
 	buf.WriteByte(self.MsgType())
 	buf.Write(opArr[:])
+	buf.Write(self.Elk[:])
 	buf.Write(self.ElkZero[:])
 	buf.Write(self.ElkOne[:])
 	buf.Write(self.ElkTwo[:])

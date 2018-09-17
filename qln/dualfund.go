@@ -2,6 +2,7 @@ package qln
 
 import (
 	"fmt"
+
 	"github.com/mit-dci/lit/btcutil/txsort"
 	"github.com/mit-dci/lit/consts"
 	"github.com/mit-dci/lit/crypto/koblitz"
@@ -454,19 +455,24 @@ func (nd *LitNode) DualFundingAcceptHandler(msg lnutil.DualFundingAcceptMsg) {
 		return
 	}
 
+	elk, err := q.ElkSnd.AtIndex(0)
+	if err != nil {
+		logging.Errorf("PointRespHandler Elk err %s", err.Error())
+		return
+	}
 	// when funding a channel, give them the first *3* elkpoints.
-	elkPointZero, err := q.ElkPoint(false, 0)
+	elkPointZero, err := q.ElkPoint(false, 1)
 	if err != nil {
 		logging.Errorf("PointRespHandler ElkpointZero err %s", err.Error())
 		return
 	}
-	elkPointOne, err := q.ElkPoint(false, 1)
+	elkPointOne, err := q.ElkPoint(false, 2)
 	if err != nil {
 		logging.Errorf("PointRespHandler ElkpointOne err %s", err.Error())
 		return
 	}
 
-	elkPointTwo, err := q.N2ElkPointForThem()
+	elkPointTwo, err := q.ElkPoint(false, 3)
 	if err != nil {
 		logging.Errorf("PointRespHandler ElkpointTwo err %s", err.Error())
 		return
@@ -476,7 +482,7 @@ func (nd *LitNode) DualFundingAcceptHandler(msg lnutil.DualFundingAcceptMsg) {
 		nd.InProgDual.PeerIdx, *nd.InProgDual.OutPoint, q.MyPub, q.MyRefundPub, q.MyHAKDBase, nd.InProgDual.OurNextHTLCBase,
 		nd.InProgDual.OurN2HTLCBase,
 		nd.InProgDual.CoinType, nd.InProgDual.OurAmount+nd.InProgDual.TheirAmount, nd.InProgDual.TheirAmount,
-		elkPointZero, elkPointOne, elkPointTwo, q.State.Data)
+		elk, elkPointZero, elkPointOne, elkPointTwo, q.State.Data)
 
 	nd.InProgDual.mtx.Unlock()
 	nd.tmpSendLitMsg(outMsg)
@@ -632,6 +638,12 @@ func (nd *LitNode) DualFundChanDescHandler(msg lnutil.ChanDescMsg) error {
 
 	qc.State.StateIdx = 0
 	// use new ElkPoint for signing
+
+	err = qc.IngestElkrem(msg.Elk)
+	if err != nil {
+		return fmt.Errorf("DualFundChanDescHandler IngestElkrem err %s", err.Error())
+	}
+
 	qc.State.ElkPoint = msg.ElkZero
 	qc.State.NextElkPoint = msg.ElkOne
 	qc.State.N2ElkPoint = msg.ElkTwo
@@ -652,6 +664,11 @@ func (nd *LitNode) DualFundChanDescHandler(msg lnutil.ChanDescMsg) error {
 	qc, err = nd.GetQchan(opArr)
 	if err != nil {
 		return fmt.Errorf("DualFundChanDescHandler GetQchan err %s", err.Error())
+	}
+
+	elk, err := qc.ElkSnd.AtIndex(0)
+	if err != nil {
+		return fmt.Errorf("DualFundChanDescHandler ElkSnd.AtIndex(0) err %s", err.Error())
 	}
 
 	// when funding a channel, give them the first *2* elkpoints.
@@ -684,7 +701,7 @@ func (nd *LitNode) DualFundChanDescHandler(msg lnutil.ChanDescMsg) error {
 	wal.SignMyInputs(fundingTx)
 
 	outMsg := lnutil.NewDualFundingChanAckMsg(
-		msg.Peer(), op,
+		msg.Peer(), op, elk,
 		theirElkPointZero, theirElkPointOne, theirElkPointTwo,
 		sig, fundingTx)
 
@@ -704,6 +721,12 @@ func (nd *LitNode) DualFundChanAckHandler(msg lnutil.DualFundingChanAckMsg, peer
 	qc, err := nd.GetQchan(opArr)
 	if err != nil {
 		logging.Errorf("DualFundChanAckHandler GetQchan err %s", err.Error())
+		return
+	}
+
+	err = qc.IngestElkrem(msg.Elk)
+	if err != nil {
+		logging.Errorf("DualFundChanAckHandler IngestElkrem err %s", err.Error())
 		return
 	}
 

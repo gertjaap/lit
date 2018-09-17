@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/mit-dci/lit/btcutil/chaincfg/chainhash"
+	"github.com/mit-dci/lit/elkrem"
 	"github.com/mit-dci/lit/lnutil"
 	"github.com/mit-dci/lit/logging"
 )
@@ -74,6 +75,11 @@ func (q *Qchan) AdvanceElkrem(elk *chainhash.Hash, n2Elk [33]byte) error {
 func (q *Qchan) IngestElkrem(elk *chainhash.Hash) error {
 	if elk == nil {
 		return fmt.Errorf("IngestElkrem: nil hash")
+	}
+
+	if q.ElkRcv == nil {
+		// Create new?
+		q.ElkRcv = elkrem.NewElkremReceiver()
 	}
 
 	// first verify the elkrem insertion (this only performs checks 1/2 the time, so

@@ -456,8 +456,6 @@ func (nd *LitNode) SaveQChan(q *Qchan) error {
 		// serialize elkrem receiver if it exists
 
 		if q.ElkRcv != nil {
-			logging.Infof("--- elk rcv exists, saving\n")
-
 			eb, err := q.ElkRcv.ToBytes()
 			if err != nil {
 				return err

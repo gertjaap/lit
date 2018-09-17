@@ -394,6 +394,12 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 		return fmt.Errorf("PointRespHandler SaveQchanState err %s", err.Error())
 	}
 
+	elk, err := q.ElkSnd.AtIndex(0)
+	if err != nil {
+		nd.FailChannel(q)
+		return err
+	}
+
 	// when funding a channel, give them the first *3* elkpoints.
 	elkPointZero, err := q.ElkPoint(false, 0)
 	if err != nil {
@@ -406,7 +412,7 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 		return err
 	}
 
-	elkPointTwo, err := q.N2ElkPointForThem()
+	elkPointTwo, err := q.ElkPoint(false, 2)
 	if err != nil {
 		nd.FailChannel(q)
 		return err
@@ -419,7 +425,7 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 	outMsg := lnutil.NewChanDescMsg(
 		msg.Peer(), *nd.InProg.op, q.MyPub, q.MyRefundPub, q.MyHAKDBase,
 		q.State.MyNextHTLCBase, q.State.MyN2HTLCBase,
-		nd.InProg.Coin, nd.InProg.Amt, nd.InProg.InitSend,
+		nd.InProg.Coin, nd.InProg.Amt, nd.InProg.InitSend, elk,
 		elkPointZero, elkPointOne, elkPointTwo, nd.InProg.Data)
 
 	nd.tmpSendLitMsg(outMsg)
@@ -488,6 +494,11 @@ func (nd *LitNode) QChanDescHandler(msg lnutil.ChanDescMsg) error {
 	qc.State.Data = msg.Data
 
 	qc.State.StateIdx = 0
+
+	err = qc.IngestElkrem(msg.Elk)
+	if err != nil {
+		return fmt.Errorf("QChanDescHandler IngestElkrem err %s", err.Error())
+	}
 	// use new ElkPoint for signing
 	qc.State.ElkPoint = msg.ElkZero
 	qc.State.NextElkPoint = msg.ElkOne
@@ -540,6 +551,13 @@ func (nd *LitNode) QChanDescHandler(msg lnutil.ChanDescMsg) error {
 		return err
 	}
 
+	elk, err := qc.ElkSnd.AtIndex(0)
+	if err != nil {
+		nd.FailChannel(qc)
+		logging.Errorf("QChanDescHandler err %s", err.Error())
+		return err
+	}
+
 	// when funding a channel, give them the first *2* elkpoints.
 	theirElkPointZero, err := qc.ElkPoint(false, 0)
 	if err != nil {
@@ -554,7 +572,7 @@ func (nd *LitNode) QChanDescHandler(msg lnutil.ChanDescMsg) error {
 		return err
 	}
 
-	theirElkPointTwo, err := qc.N2ElkPointForThem()
+	theirElkPointTwo, err := qc.ElkPoint(false, 2)
 	if err != nil {
 		nd.FailChannel(qc)
 		logging.Errorf("QChanDescHandler err %s", err.Error())
@@ -569,7 +587,7 @@ func (nd *LitNode) QChanDescHandler(msg lnutil.ChanDescMsg) error {
 	}
 
 	outMsg := lnutil.NewChanAckMsg(
-		msg.Peer(), op,
+		msg.Peer(), op, elk,
 		theirElkPointZero, theirElkPointOne, theirElkPointTwo,
 		sig)
 	outMsg.Bytes()
@@ -599,6 +617,13 @@ func (nd *LitNode) QChanAckHandler(msg lnutil.ChanAckMsg, peer *RemotePeer) {
 	//		logging.Errorf("QChanAckHandler IngestElkrem err %s", err.Error())
 	//		return
 	//	}
+
+	err = qc.IngestElkrem(msg.Elk)
+	if err != nil {
+		logging.Errorf("QChanAckHandler IngestElkrem err %s", err.Error())
+		return
+	}
+
 	qc.State.ElkPoint = msg.ElkZero
 	qc.State.NextElkPoint = msg.ElkOne
 	qc.State.N2ElkPoint = msg.ElkTwo
