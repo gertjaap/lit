@@ -20,7 +20,9 @@ var DummyUsdNetParams = Params{
 	PoWFunction: func(b []byte, height int32) chainhash.Hash {
 		return chainhash.DoubleHashH(b)
 	},
-	DiffCalcFunction: diffBitcoin,
+	DiffCalcFunction: func(headers []*wire.BlockHeader, height int32, p *Params) (uint32, error) {
+		return p.PowLimitBits, nil
+	},
 	//	func(r io.ReadSeeker, height, startheight int32, p *Params) (uint32, error) {
 	//		return diffBTC(r, height, startheight, p, false)
 	//	},
