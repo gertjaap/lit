@@ -21,4 +21,4 @@ COPY --from=build /usr/local/go/src/github.com/mit-dci/lit/cmd/lit-af/lit-af /ap
 
 EXPOSE 8001
 
-CMD ["bin/lit"]
+CMD ["bin/lit","-vvvv"]
