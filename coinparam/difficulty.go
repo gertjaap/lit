@@ -55,7 +55,7 @@ func diffBitcoin(
 	headers []*wire.BlockHeader, height int32, p *Params) (uint32, error) {
 
 	ltcmode := p.Name == "litetest4" || p.Name == "litereg" || p.Name == "vtcreg" ||
-		p.Name == "litecoin" || p.Name == "vtctest" || p.Name == "vtc"
+		p.Name == "litecoin" || p.Name == "vtctest" || p.Name == "vtc" || p.Name == "dollar"
 
 	//if p.Name == "regtest" {
 	//	logging.Error("REKT")
