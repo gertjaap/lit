@@ -40,27 +40,29 @@ func Announce(priv *koblitz.PrivateKey, port int, litadr string, trackerURL stri
 	}
 	strport := ":" + strconv.Itoa(port)
 	resp, err := client.Get("https://ipv4.myexternalip.com/raw")
+	liturlIPv4 := "0.0.0.0:2448"
 	if err != nil {
-		return err
+		logging.Infof("Get IPv4 error: %v", err)
+	} else {
+		defer resp.Body.Close()
+
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+
+		liturlIPv4 = strings.TrimSpace(buf.String()) + strport
 	}
-	defer resp.Body.Close()
 
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(resp.Body)
-
-	liturlIPv4 := strings.TrimSpace(buf.String()) + strport
-
-	var liturlIPv6 string
+	liturlIPv6 := "::"
 
 	/* TODO: Find a better way to get this information. Their
 	 * SSL cert doesn't work for IPv6.
 	 */
 	resp, err = client.Get("http://ipv6.myexternalip.com/raw")
 	if err != nil {
-		logging.Infof("%v", err)
+		logging.Infof("Get IPv6 error: %v", err)
 	} else {
 		defer resp.Body.Close()
-		buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 		buf.ReadFrom(resp.Body)
 		liturlIPv6 = strings.TrimSpace(buf.String()) + strport
 	}
