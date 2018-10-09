@@ -31,6 +31,7 @@ type LndcRpcClient struct {
 	responseChannels   map[uint64]chan lnutil.RemoteControlRpcResponseMsg
 	key                *koblitz.PrivateKey
 	conMtx             sync.Mutex
+	address            string
 }
 
 // LndcRpcCanConnectLocally checks if we can connect to lit using the normal
@@ -116,31 +117,45 @@ func NewLndcRpcClient(address string, key *koblitz.PrivateKey) (*LndcRpcClient, 
 	var err error
 
 	cli := new(LndcRpcClient)
+
 	// Create a map of chan objects to receive returned responses on. These channels
 	// are sent to from the ReceiveLoop, and awaited in the Call method.
 	cli.responseChannels = make(map[uint64]chan lnutil.RemoteControlRpcResponseMsg)
+	cli.address = address
+	cli.key = key
+
+	err = cli.Reconnect()
+	if err != nil {
+		return nil, err
+	}
+	return cli, nil
+}
+
+func (cli *LndcRpcClient) Reconnect() error {
+	var err error
 
 	//Parse the address we're connecting to
-	who, where := lnutil.ParseAdrString(address)
+	who, where := lnutil.ParseAdrString(cli.address)
 
 	// If we couldn't deduce a URL, look it up on the tracker
 	if where == "" {
 		// TODO: Implement address lookups
 		err = fmt.Errorf("Tracker lookups not supported yet from LNDC proxy")
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
 	// Dial a connection to the lit node
-	cli.lnconn, err = lndc.Dial(key, where, who, net.Dial)
+	cli.lnconn, err = lndc.Dial(cli.key, where, who, net.Dial)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Start the receive loop for reply messages
 	go cli.ReceiveLoop()
-	return cli, nil
+
+	return nil
 }
 
 func (cli *LndcRpcClient) Close() error {
@@ -161,29 +176,26 @@ func (cli *LndcRpcClient) Call(serviceMethod string, args interface{}, reply int
 	cli.responseChannels[nonce] = make(chan lnutil.RemoteControlRpcResponseMsg)
 	cli.responseChannelMtx.Unlock()
 
-	// Send the message in a goroutine
-	go func() {
-		msg := new(lnutil.RemoteControlRpcRequestMsg)
-		msg.Args, err = json.Marshal(args)
-		msg.Idx = nonce
-		msg.Method = serviceMethod
+	msg := new(lnutil.RemoteControlRpcRequestMsg)
+	msg.Args, err = json.Marshal(args)
+	msg.Idx = nonce
+	msg.Method = serviceMethod
 
-		if err != nil {
-			logging.Fatal(err)
-		}
+	if err != nil {
+		return err
+	}
 
-		rawMsg := msg.Bytes()
-		cli.conMtx.Lock()
-		n, err := cli.lnconn.Write(rawMsg)
-		cli.conMtx.Unlock()
-		if err != nil {
-			logging.Fatal(err)
-		}
+	rawMsg := msg.Bytes()
+	cli.conMtx.Lock()
+	n, err := cli.lnconn.Write(rawMsg)
+	cli.conMtx.Unlock()
+	if err != nil {
+		return err
+	}
 
-		if n < len(rawMsg) {
-			logging.Fatal(fmt.Errorf("Did not write entire message to peer"))
-		}
-	}()
+	if n < len(rawMsg) {
+		return fmt.Errorf("Did not write entire message to peer")
+	}
 
 	// If reply is nil the caller apparently doesn't care about the results. So we shouldn't wait for it
 	if reply != nil {
