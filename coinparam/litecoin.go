@@ -98,7 +98,9 @@ var LiteRegNetParams = Params{
 		asChainHash, _ := chainhash.NewHash(scryptBytes)
 		return *asChainHash
 	},
-	DiffCalcFunction:         diffBitcoin,
+	DiffCalcFunction: func(headers []*wire.BlockHeader, height int32, p *Params) (uint32, error) {
+		return p.PowLimitBits, nil
+	},
 	FeePerByte:               800,
 	PowLimit:                 regressionPowLimit,
 	PowLimitBits:             0x207fffff,
@@ -140,7 +142,7 @@ var LiteRegNetParams = Params{
 	// BIP44 coin type used in the hierarchical deterministic path for
 	// address generation.
 	HDCoinType: 258, // i dunno
-	TestCoin: true,
+	TestCoin:   true,
 }
 
 // liteCoinTestNet4GenesisHash is the first hash in litecoin testnet4

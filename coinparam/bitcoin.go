@@ -28,7 +28,9 @@ var BitcoinParams = Params{
 	PoWFunction: func(b []byte, height int32) chainhash.Hash {
 		return chainhash.DoubleHashH(b)
 	},
-	DiffCalcFunction:         diffBitcoin,
+	DiffCalcFunction: func(headers []*wire.BlockHeader, height int32, p *Params) (uint32, error) {
+		return p.PowLimitBits, nil
+	},
 	FeePerByte:               80,
 	PowLimit:                 mainPowLimit,
 	PowLimitBits:             0x1d00ffff,
@@ -159,7 +161,7 @@ var TestNet3Params = Params{
 	// BIP44 coin type used in the hierarchical deterministic path for
 	// address generation.
 	HDCoinType: 1,
-	TestCoin: true,
+	TestCoin:   true,
 }
 
 // RegressionNetParams defines the network parameters for the regression test
