@@ -159,7 +159,11 @@ func (cli *LndcRpcClient) Reconnect() error {
 }
 
 func (cli *LndcRpcClient) Close() error {
-	return cli.lnconn.Close()
+	if cli.lnconn != nil {
+		return cli.lnconn.Close()
+	} else {
+		return nil
+	}
 }
 
 func (cli *LndcRpcClient) Call(serviceMethod string, args interface{}, reply interface{}) error {
@@ -183,6 +187,10 @@ func (cli *LndcRpcClient) Call(serviceMethod string, args interface{}, reply int
 
 	if err != nil {
 		return err
+	}
+
+	if cli.lnconn == nil {
+		return fmt.Errorf("Connection is nil. Maybe reconnect?")
 	}
 
 	rawMsg := msg.Bytes()
