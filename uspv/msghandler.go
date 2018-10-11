@@ -49,6 +49,13 @@ func (s *SPVCon) incomingMessageHandler() {
 		case *wire.MsgReject:
 			logging.Infof("Rejected! cmd: %s code: %s tx: %s reason: %s",
 				m.Cmd, m.Code.String(), m.Hash.String(), m.Reason)
+			tx, ok := s.TxMap[m.Hash]
+			if ok {
+				lnutil.PrintTx(tx)
+			} else {
+				logging.Infof("Rejected transaction is not in TxMap :(")
+			}
+
 		case *wire.MsgInv:
 			s.InvHandler(m)
 		case *wire.MsgNotFound:
