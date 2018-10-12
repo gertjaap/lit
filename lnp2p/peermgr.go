@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -153,7 +154,10 @@ func (pm *PeerManager) TryConnectAddress(addr string, settings *NetSettings) (*P
 		if err != nil {
 			return nil, err
 		}
-		where = fmt.Sprintf("%s:2448", ipv4)
+		where = ipv4
+		if !strings.Contains(where, ":") {
+			where = fmt.Sprintf("%s:2448", ipv4)
+		}
 	}
 
 	lnwho := lncore.LnAddr(who)
