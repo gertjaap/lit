@@ -300,6 +300,13 @@ func main() {
 		go litrpc.RPCListen(rpcl, conf.Rpchost, conf.Rpcport)
 	}
 
+	if conf.AutoListenPort != 0 {
+		_, err := node.TCPListener(conf.AutoListenPort)
+		if err != nil {
+			logging.Error(err)
+		}
+	}
+
 	<-rpcl.OffButton
 	logging.Infof("Got stop request\n")
 	time.Sleep(time.Second)
