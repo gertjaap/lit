@@ -138,19 +138,24 @@ func NewLitNode(privKey *[32]byte, path string, trackerURL string, proxyURL stri
 
 	// Do we do autoreconnection things?
 	if autoreconn {
-		pdb := nd.NewLitDB.GetPeerDB()
-		infos, err := pdb.GetPeerInfos()
-		if err != nil {
-			return nil, err
-		}
-		logging.Infof("init: autoreconnecting to %d peers\n", len(infos))
-		for a, pi := range infos {
-			logging.Infof("init: trying to connect to previous peer: %s\n", a)
-			_, err = nd.PeerMan.TryConnectAddress(fmt.Sprintf("%s@%s", string(a), *pi.NetAddr), nil) // TODO Proxy/NAT
+		// Do this in a subroutine - don't wait on it. If connections time out this takes a long time
+		// if you have a lot of preknown peers. Undesirable to halt startup for that.
+		go func() {
+			pdb := nd.NewLitDB.GetPeerDB()
+			infos, err := pdb.GetPeerInfos()
 			if err != nil {
-				logging.Warnf("init: tried to auto-connect to %s but failed: %s\n", a, err.Error())
+				logging.Warnf("Error while getting peer infos: %s", err.Error())
+				return
 			}
-		}
+			logging.Infof("init: autoreconnecting to %d peers\n", len(infos))
+			for a, _ := range infos {
+				logging.Infof("init: trying to connect to previous peer: %s\n", a)
+				_, err = nd.PeerMan.TryConnectAddress(fmt.Sprintf("%s", string(a)), nil)
+				if err != nil {
+					logging.Warnf("init: tried to auto-connect to %s but failed: %s\n", a, err.Error())
+				}
+			}
+		}()
 	}
 
 	return nd, nil
