@@ -223,7 +223,7 @@ func (pm *PeerManager) tryConnectPeer(netaddr string, lnaddr *lncore.LnAddr, set
 
 	pi, err := pm.peerdb.GetPeerInfo(*lnaddr)
 	if err != nil {
-		logging.Errorf("Problem loading peer info from DB: %s\n", err.Error())
+		logging.Errorf("peermgr: Problem loading peer info from DB: %s\n", err.Error())
 		// don't kill the connection?
 	}
 
@@ -240,7 +240,7 @@ func (pm *PeerManager) tryConnectPeer(netaddr string, lnaddr *lncore.LnAddr, set
 	if pi == nil {
 		pidx, err := pm.peerdb.GetUniquePeerIdx()
 		if err != nil {
-			logging.Errorf("Problem getting unique peeridx from DB: %s\n", err.Error())
+			logging.Errorf("peermgr: Problem getting unique peeridx from DB: %s\n", err.Error())
 		} else {
 			p.idx = &pidx
 		}
@@ -251,9 +251,10 @@ func (pm *PeerManager) tryConnectPeer(netaddr string, lnaddr *lncore.LnAddr, set
 			NetAddr:  &raddr,
 			PeerIdx:  pidx,
 		}
+		logging.Infof("peermgr: Registering peer %s\n", p.GetLnAddr())
 		err = pm.peerdb.AddPeer(p.GetLnAddr(), *pi)
 		if err != nil {
-			logging.Errorf("Error saving new peer to DB: %s\n", err.Error())
+			logging.Errorf("peermgr: Error saving new peer to DB: %s\n", err.Error())
 		}
 	} else {
 		p.nickname = pi.Nickname
