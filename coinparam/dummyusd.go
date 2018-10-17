@@ -26,7 +26,7 @@ var DummyUsdNetParams = Params{
 	//	func(r io.ReadSeeker, height, startheight int32, p *Params) (uint32, error) {
 	//		return diffBTC(r, height, startheight, p, false)
 	//	},
-	FeePerByte:               80,
+	FeePerByte:               1,
 	PowLimit:                 regressionPowLimit,
 	PowLimitBits:             0x207fffff,
 	CoinbaseMaturity:         100,

@@ -101,7 +101,7 @@ var LiteRegNetParams = Params{
 	DiffCalcFunction: func(headers []*wire.BlockHeader, height int32, p *Params) (uint32, error) {
 		return p.PowLimitBits, nil
 	},
-	FeePerByte:               800,
+	FeePerByte:               1,
 	PowLimit:                 regressionPowLimit,
 	PowLimitBits:             0x207fffff,
 	CoinbaseMaturity:         100,
