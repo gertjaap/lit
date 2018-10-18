@@ -39,68 +39,69 @@ func acceptConnections(listener *lndc.Listener, port int, pm *PeerManager) {
 		lndcConn, ok := netConn.(*lndc.Conn)
 		if !ok {
 			// this should never happen
-			logging.Errorf("didn't get an lndc connection from listener, wtf?\n")
+			logging.Errorf("didn't get an lndc connection from listener, quitting!\n")
 			netConn.Close()
 			continue
 		}
 
-		rpk := pubkey(lndcConn.RemotePub())
-		rlitaddr := convertPubkeyToLitAddr(rpk)
-		rnetaddr := lndcConn.RemoteAddr()
+		remotePubkey := pubkey(lndcConn.RemotePub())
+		remoteLitAddr := convertPubkeyToLitAddr(remotePubkey)
+		remoteNetAddr := lndcConn.RemoteAddr().String()
 
-		logging.Infof("New connection from %s at %s\n", rlitaddr, rnetaddr.String())
+		logging.Infof("New connection from %s at %s\n", remoteLitAddr, remoteNetAddr)
 
-		// Read the peer info from the DB.
-		pi, err := pm.peerdb.GetPeerInfo(rlitaddr)
-		if err != nil {
-			logging.Warnf("problem loading peer info in DB (maybe this is ok?): %s\n", err.Error())
-			netConn.Close()
-			continue
-		}
-
-		// Create the actual peer object.
-		npeer := &Peer{
-			lnaddr:   rlitaddr,
+		// Create the actual peer object since we need to interface with db to do this
+		// TODO: remove this
+		newPeer := &Peer{
+			lnaddr:   remoteLitAddr,
 			nickname: nil,
 			conn:     lndcConn,
-			idpubkey: rpk,
-
-			// TEMP
+			idpubkey: remotePubkey,
 			idx: nil,
 		}
 
-		// Add the peer data to the DB if we don't have it.
-		if pi == nil {
-			raddr := rnetaddr.String()
-			pidx, err := pm.peerdb.GetUniquePeerIdx()
+		// Read the peer info from the DB.
+		pi, err := pm.peerdb.GetPeerInfo(remoteLitAddr) // search based on remote peer address
+		if err != nil {
+			logging.Warnf("problem loading peer info in DB: %s\n", err.Error())
+			netConn.Close()
+			continue
+		}
+
+		if pi != nil {
+			// we already have this peer in the db, but we want to udpate this
+			// the update method is a bit weird, so we delete it directly and
+			// replacing it with a new one.
+			// TODO: Fix the UpdatePeer method to behave as expected
+			logging.Info("Found peer in peerdb. Don't disconnect, just delete", pi.PeerIdx)
+			newPeer.idx = &pi.PeerIdx
+			pm.peerdb.DeletePeer(remoteLitAddr)
+		} else {
+			temp, err := pm.peerdb.GetUniquePeerIdx()
 			if err != nil {
 				logging.Errorf("problem getting unique peeridx: %s\n", err.Error())
 			}
-			pi = &lncore.PeerInfo{
-				LnAddr:   &rlitaddr,
-				Nickname: nil,
-				NetAddr:  &raddr,
-				PeerIdx:  pidx,
-			}
-			err = pm.peerdb.AddPeer(rlitaddr, *pi)
-			npeer.idx = &pidx
-			if err != nil {
-				// don't close it, I guess
-				logging.Errorf("problem saving peer info to DB: %s\n", err.Error())
-			}
-		} else {
-			npeer.nickname = pi.Nickname
-			// TEMP
-			npeer.idx = &pi.PeerIdx
+			newPeer.idx = &temp
+		}
+
+		pi = &lncore.PeerInfo{
+			LnAddr:   &remoteLitAddr,
+			Nickname: nil,
+			NetAddr:  &remoteNetAddr,
+			PeerIdx:  *newPeer.idx,
+		}
+		err = pm.peerdb.AddPeer(remoteLitAddr, *pi)
+		if err != nil {
+			// don't close it, I guess
+			logging.Errorf("problem saving peer info to DB: %s\n", err.Error())
 		}
 
 		// Don't do any locking here since registerPeer takes a lock and Go's
 		// mutex isn't reentrant.
-		pm.registerPeer(npeer)
+		pm.registerPeer(newPeer)
 
 		// Start a goroutine to process inbound traffic for this peer.
-		go processConnectionInboundTraffic(npeer, pm)
-
+		go processConnectionInboundTraffic(newPeer, pm)
 	}
 
 	// Update the stop reason.
@@ -113,7 +114,6 @@ func acceptConnections(listener *lndc.Listener, port int, pm *PeerManager) {
 
 	// after this the stop event will be published
 	logging.Infof("Stopped listening on %s\n", port)
-
 }
 
 func processConnectionInboundTraffic(peer *Peer, pm *PeerManager) {
