@@ -147,7 +147,7 @@ func (pdb *peerboltdb) UpdatePeer(addr lncore.LnAddr, pi *lncore.PeerInfo) error
 	if err != nil {
 		return err
 	}
-	logging.Info("COOL?", addr, pi)
+
 	err = pdb.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(peersLabel)
 
@@ -161,7 +161,7 @@ func (pdb *peerboltdb) UpdatePeer(addr lncore.LnAddr, pi *lncore.PeerInfo) error
 	if err != nil {
 		return err
 	}
-	logging.Info("UPDATE DONE")
+
 	return nil
 
 }
