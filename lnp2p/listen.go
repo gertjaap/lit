@@ -57,7 +57,7 @@ func acceptConnections(listener *lndc.Listener, port int, pm *PeerManager) {
 			nickname: nil,
 			conn:     lndcConn,
 			idpubkey: remotePubkey,
-			idx: nil,
+			idx:      nil,
 		}
 
 		// Read the peer info from the DB.
@@ -73,7 +73,7 @@ func acceptConnections(listener *lndc.Listener, port int, pm *PeerManager) {
 			// the update method is a bit weird, so we delete it directly and
 			// replacing it with a new one.
 			// TODO: Fix the UpdatePeer method to behave as expected
-			logging.Info("Found peer in peerdb. Don't disconnect, just delete", pi.PeerIdx)
+			logging.Info("Found peer in peerdb. Don't disconnect, just delete ", pi.PeerIdx)
 			newPeer.idx = &pi.PeerIdx
 			pm.peerdb.DeletePeer(remoteLitAddr)
 		} else {
@@ -90,16 +90,14 @@ func acceptConnections(listener *lndc.Listener, port int, pm *PeerManager) {
 			NetAddr:  &remoteNetAddr,
 			PeerIdx:  *newPeer.idx,
 		}
+		pm.mtx.Lock()
 		err = pm.peerdb.AddPeer(remoteLitAddr, *pi)
 		if err != nil {
 			// don't close it, I guess
 			logging.Errorf("problem saving peer info to DB: %s\n", err.Error())
 		}
-
-		// Don't do any locking here since registerPeer takes a lock and Go's
-		// mutex isn't reentrant.
 		pm.registerPeer(newPeer)
-
+		pm.mtx.Unlock()
 		// Start a goroutine to process inbound traffic for this peer.
 		go processConnectionInboundTraffic(newPeer, pm)
 	}
