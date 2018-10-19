@@ -5,16 +5,23 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/mit-dci/lit/lnutil"
+
 	"github.com/mit-dci/lit/crypto/koblitz"
 	"github.com/mit-dci/lit/logging"
 	"golang.org/x/net/websocket"
 )
 
+type ConnectResult struct {
+	Success bool
+	MyAdr   string
+}
+
 // LndcRpcWebsocketProxy is a regular websocket server that translates the
 // received requests into a call on the new LNDC based remote control transport
 type LndcRpcWebsocketProxy struct {
 	lndcRpcClient *LndcRpcClient
-	localKey      []byte
+	localKey      [32]byte
 }
 
 // NewLocalLndcRpcWebsocketProxy is an overload to NewLndcRpcWebsocketProxyWithLndc
@@ -75,7 +82,7 @@ func NewLndcRpcWebsocketProxyWithLndc(lndcRpcClient *LndcRpcClient) *LndcRpcWebs
 // "LitRPCProxy.Connect" commands
 func NewUnconnectedLndcRpcWebsocketProxy(localKey []byte) *LndcRpcWebsocketProxy {
 	proxy := new(LndcRpcWebsocketProxy)
-	proxy.localKey = localKey
+	copy(proxy.localKey[:], localKey)
 	return proxy
 }
 
@@ -148,13 +155,17 @@ func (p *LndcRpcWebsocketProxy) proxyServeWS(ws *websocket.Conn) {
 			jsonResponse, _ = json.Marshal(successResponse(id, p.lndcRpcClient != nil))
 		} else if method.(string) == "LitRPCProxy.Connect" {
 			// TODO: Parameter sanity checks!
-			privKey, _ := koblitz.PrivKeyFromBytes(koblitz.S256(), p.localKey)
+			privKey, pubKey := koblitz.PrivKeyFromBytes(koblitz.S256(), p.localKey[:])
+			myPubKey := [33]byte{}
+			copy(myPubKey[:], pubKey.SerializeCompressed())
+			myAdr := lnutil.LitAdrFromPubkey(myPubKey)
 			client, err := NewLndcRpcClient(args.(map[string]interface{})["adr"].(string), privKey)
 			if err != nil {
 				jsonResponse, _ = json.Marshal(errorResponse(id, -32002, err))
 			} else {
 				p.lndcRpcClient = client
-				jsonResponse, _ = json.Marshal(successResponse(id, true))
+
+				jsonResponse, _ = json.Marshal(successResponse(id, ConnectResult{Success: true, MyAdr: myAdr}))
 			}
 		} else {
 			// Check if we are connected
