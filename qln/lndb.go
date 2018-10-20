@@ -362,7 +362,7 @@ func (nd *LitNode) SaveNicknameForPeerIdx(nickname string, idx uint32) error {
 
 	// Actually go and set it.
 	pi := peer.IntoPeerInfo()
-	err := nd.NewLitDB.GetPeerDB().AddPeer(peer.GetLnAddr(), pi)
+	err := nd.NewLitDB.GetPeerDB().UpdatePeer(peer.GetLnAddr(), &pi)
 
 	return err // same as if err != nil { return err } ; return nil
 }

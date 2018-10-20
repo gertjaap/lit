@@ -9,7 +9,6 @@ type LitPeerStorage interface {
 	GetPeerAddrs() ([]LnAddr, error)
 	GetPeerInfo(addr LnAddr) (*PeerInfo, error)
 	GetPeerInfos() (map[LnAddr]PeerInfo, error)
-	AddPeer(addr LnAddr, pi PeerInfo) error
 	UpdatePeer(addr LnAddr, pi *PeerInfo) error
 	DeletePeer(addr LnAddr) error
 

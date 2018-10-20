@@ -252,7 +252,7 @@ func (pm *PeerManager) tryConnectPeer(netaddr string, lnaddr *lncore.LnAddr, set
 			PeerIdx:  pidx,
 		}
 		logging.Infof("peermgr: Registering peer %s\n", p.GetLnAddr())
-		err = pm.peerdb.AddPeer(p.GetLnAddr(), *pi)
+		err = pm.peerdb.UpdatePeer(p.GetLnAddr(), pi)
 		if err != nil {
 			logging.Errorf("peermgr: Error saving new peer to DB: %s\n", err.Error())
 		}
