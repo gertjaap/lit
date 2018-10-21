@@ -107,8 +107,10 @@ func (nd *LitNode) tmpSendLitMsg(msg lnutil.LitMsg) {
 
 	logging.Infof("Sending message of type [%x] to msg.Peer() [%d] - which is peer.GetIdx() [%d], adr [%s]\n", msg.MsgType(), msg.Peer(), np.GetIdx(), np.GetLnAddr())
 
-	np.SendImmediateMessage(LitMsgWrapperMessage{buf[0], buf[1:]}) // being blocking might not be a huge issue here possibly?
-
+	err := np.SendImmediateMessage(LitMsgWrapperMessage{buf[0], buf[1:]}) // being blocking might not be a huge issue here possibly?
+	if err != nil {
+		logging.Errorf("SendImmediateMessage error : %s", err.Error())
+	}
 }
 
 // SimplePeerInfo .
