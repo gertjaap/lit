@@ -153,6 +153,8 @@ func (nd *LitNode) RemoteControlRequestHandler(msg lnutil.RemoteControlRpcReques
 		// Use reflection to call the method on the RPC object
 		methodName := strings.TrimPrefix(msg.Method, "LitRPC.")
 		rpcType := reflect.ValueOf(nd.RPC)
+		var reply []byte
+		replyIsError := false
 		if rpcType.IsValid() {
 			method := rpcType.MethodByName(methodName)
 			if method.IsValid() {
@@ -174,35 +176,40 @@ func (nd *LitNode) RemoteControlRequestHandler(msg lnutil.RemoteControlRpcReques
 				err = json.Unmarshal(msg.Args, argsPayload.Interface())
 				if err != nil {
 					logging.Errorf("Error parsing json argument: %s", err.Error())
-					return
-				}
-
-				replyType := method.Type().In(1).Elem()
-				replyPayload := reflect.New(replyType)
-
-				if !argsPointer {
-					argsPayload = argsPayload.Elem()
-				}
-				result := method.Call([]reflect.Value{argsPayload, replyPayload})
-
-				var reply []byte
-				replyIsError := false
-				if !result[0].IsNil() {
 					replyIsError = true
-					err = result[0].Interface().(error)
-					reply = []byte(err.Error())
+					reply = []byte(err.Error());
 				} else {
-					reply, err = json.Marshal(replyPayload.Interface())
-					if err != nil {
+					replyType := method.Type().In(1).Elem()
+					replyPayload := reflect.New(replyType)
+
+					if !argsPointer {
+						argsPayload = argsPayload.Elem()
+					}
+					result := method.Call([]reflect.Value{argsPayload, replyPayload})
+
+					
+					if !result[0].IsNil() {
 						replyIsError = true
+						err = result[0].Interface().(error)
 						reply = []byte(err.Error())
+					} else {
+						reply, err = json.Marshal(replyPayload.Interface())
+						if err != nil {
+							replyIsError = true
+							reply = []byte(err.Error())
+						}
 					}
 				}
-
-				outMsg := lnutil.NewRemoteControlRpcResponseMsg(peer.Idx, msg.Idx, replyIsError, reply)
-				nd.tmpSendLitMsg(outMsg)
+			} else {
+				replyIsError = true
+				reply = []byte(fmt.Sprintf("Method %s unknown", msg.Method)
 			}
+		} else {
+			replyIsError = true
+			reply = []byte("Reflection error on nd.RPC")
 		}
+		outMsg := lnutil.NewRemoteControlRpcResponseMsg(peer.Idx, msg.Idx, replyIsError, reply)
+		nd.tmpSendLitMsg(outMsg)
 	}()
 	return nil
 }
