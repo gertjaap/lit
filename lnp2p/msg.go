@@ -33,6 +33,7 @@ func sendMessages(queue chan outgoingmsg) {
 
 		// Sending a message with a nil peer is how we signal to "stop sending things".
 		if recv.peer == nil {
+			logging.Info("Received stop signal, ending sendMessages loop\n")
 			if recv.finishchan != nil {
 				*recv.finishchan <- nil
 			}
@@ -65,10 +66,12 @@ func sendMessages(queue chan outgoingmsg) {
 		}
 
 		// Actually write it.
-		_, err := conn.Write(buf)
+		n, err := conn.Write(buf)
 		if err != nil {
 			logging.Warnf("peermgr: Error sending message to peer: %s\n", err.Error())
 		}
+
+		logging.Infof("Wrote %d bytes to %s\n", n, conn.RemoteAddr().String())
 
 		// Responses, if applicable.
 		if recv.finishchan != nil {
