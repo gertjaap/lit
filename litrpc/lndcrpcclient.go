@@ -177,7 +177,8 @@ func (cli *LndcRpcClient) Call(serviceMethod string, args interface{}, reply int
 
 	// Create the channel to receive the reply on
 	cli.responseChannelMtx.Lock()
-	cli.responseChannels[nonce] = make(chan lnutil.RemoteControlRpcResponseMsg)
+	responseChan := make(chan lnutil.RemoteControlRpcResponseMsg)
+	cli.responseChannels[nonce] = responseChan
 	cli.responseChannelMtx.Unlock()
 
 	msg := new(lnutil.RemoteControlRpcRequestMsg)
@@ -210,7 +211,7 @@ func (cli *LndcRpcClient) Call(serviceMethod string, args interface{}, reply int
 		// If not nil, await the reply from the responseChannel for the nonce we sent out.
 		// the server will include the same nonce in its reply.
 		select {
-		case receivedReply := <-cli.responseChannels[nonce]:
+		case receivedReply := <-responseChan:
 			{
 				if receivedReply.Error {
 					return errors.New(string(receivedReply.Result))
