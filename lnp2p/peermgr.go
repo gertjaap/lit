@@ -55,7 +55,7 @@ type PeerManager struct {
 	mtx *sync.Mutex
 }
 
-const outgoingbuf = 16
+const outgoingbuf = 1024
 
 // NetSettings is a container struct for misc network settings like NAT
 // holepunching and proxies.
