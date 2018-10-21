@@ -7,15 +7,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/mit-dci/lit/logging"
-
+	flags "github.com/jessevdk/go-flags"
 	"github.com/mit-dci/lit/coinparam"
 	consts "github.com/mit-dci/lit/consts"
 	"github.com/mit-dci/lit/litrpc"
 	"github.com/mit-dci/lit/lnutil"
+	"github.com/mit-dci/lit/logging"
 	"github.com/mit-dci/lit/qln"
-
-	flags "github.com/jessevdk/go-flags"
 )
 
 type litConfig struct { // define a struct for usage with go-flags
@@ -141,10 +139,10 @@ func linkWallets(node *qln.LitNode, key *[32]byte, conf *litConfig) error {
 	if !lnutil.NopeString(conf.Litereghost) {
 		p := &coinparam.LiteRegNetParams
 		resync := false
-		conf.Tip = consts.BitcoinRegtestBHeight
+		conf.Tip = consts.LitecoinRegtestBHeight
 		if conf.Resync == "ltcreg" {
-			if conf.Tip < consts.BitcoinRegtestBHeight {
-				conf.Tip = consts.BitcoinRegtestBHeight // birth heights are the same for btc and ltc regtests
+			if conf.Tip < consts.LitecoinRegtestBHeight {
+				conf.Tip = consts.LitecoinRegtestBHeight
 			}
 			resync = true
 		}
@@ -209,14 +207,14 @@ func linkWallets(node *qln.LitNode, key *[32]byte, conf *litConfig) error {
 		p := &coinparam.DummyUsdNetParams
 		logging.Infof("Dummyusd: %s\n", conf.Dummyusdhost)
 		resync := false
-		conf.Tip = p.StartHeight
+		conf.Tip = consts.DummyUSDRegtestBHeight
 		if conf.Resync == "dusd" {
-			if conf.Tip < 1 {
-				conf.Tip = 1
+			if conf.Tip < consts.DummyUSDRegtestBHeight {
+				conf.Tip = consts.DummyUSDRegtestBHeight
 			}
 			resync = true
 		}
-		err = node.LinkBaseWallet(key, consts.BitcoinRegtestBHeight, resync,
+		err = node.LinkBaseWallet(key, consts.DummyUSDRegtestBHeight, resync,
 			conf.Tower, conf.Dummyusdhost, conf.ChainProxyURL, p)
 		if err != nil {
 			return err
