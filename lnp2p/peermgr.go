@@ -49,7 +49,7 @@ type PeerManager struct {
 	outqueue chan outgoingmsg
 
 	// Tracker
-	trackerURL string
+	TrackerURL string
 
 	// Sync.
 	mtx *sync.Mutex
@@ -82,7 +82,7 @@ func NewPeerManager(rootkey *hdkeychain.ExtendedKey, pdb lncore.LitPeerStorage, 
 		peerMap:        map[lncore.LnAddr]*Peer{},
 		listeningPorts: map[int]*listeningthread{},
 		sending:        false,
-		trackerURL:     trackerURL,
+		TrackerURL:     trackerURL,
 		outqueue:       make(chan outgoingmsg, outgoingbuf),
 		mtx:            &sync.Mutex{},
 	}
@@ -150,7 +150,7 @@ func (pm *PeerManager) TryConnectAddress(addr string, settings *NetSettings) (*P
 	// Figure out who we're trying to connect to.
 	who, where := splitAdrString(addr)
 	if where == "" {
-		ipv4, _, err := lnutil.Lookup(addr, pm.trackerURL, "")
+		ipv4, _, err := lnutil.Lookup(addr, pm.TrackerURL, "")
 		if err != nil {
 			return nil, err
 		}
@@ -161,12 +161,12 @@ func (pm *PeerManager) TryConnectAddress(addr string, settings *NetSettings) (*P
 	}
 
 	lnwho := lncore.LnAddr(who)
-	x, y := pm.tryConnectPeer(where, &lnwho, settings)
+	x, y := pm.TryConnectPeer(where, &lnwho, settings)
 	return x, y
 
 }
 
-func (pm *PeerManager) tryConnectPeer(netaddr string, lnaddr *lncore.LnAddr, settings *NetSettings) (*Peer, error) {
+func (pm *PeerManager) TryConnectPeer(netaddr string, lnaddr *lncore.LnAddr, settings *NetSettings) (*Peer, error) {
 
 	// lnaddr check, to make sure that we do the right thing.
 	if lnaddr == nil {
@@ -252,7 +252,7 @@ func (pm *PeerManager) tryConnectPeer(netaddr string, lnaddr *lncore.LnAddr, set
 			PeerIdx:  pidx,
 		}
 		logging.Infof("peermgr: Registering peer %s\n", p.GetLnAddr())
-		err = pm.peerdb.AddPeer(p.GetLnAddr(), *pi)
+		err = pm.peerdb.UpdatePeer(p.GetLnAddr(), pi)
 		if err != nil {
 			logging.Errorf("peermgr: Error saving new peer to DB: %s\n", err.Error())
 		}
@@ -448,9 +448,6 @@ func (pm *PeerManager) queueMessageToPeer(peer *Peer, msg Message, ec *chan erro
 	if !pm.sending {
 		return fmt.Errorf("sending is disabled on this peer manager, need to start it?")
 	}
-
-	logging.Infof("Queueing outgoing message to peer %d for message type %x\n", peer.GetIdx(), msg.Type())
-
 	pm.outqueue <- outgoingmsg{peer, &msg, ec}
 	return nil
 }
