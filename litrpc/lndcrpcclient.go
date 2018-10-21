@@ -258,9 +258,12 @@ func (cli *LndcRpcClient) ReceiveLoop() {
 				// listening. The caller decides if he's interested in the
 				// reply and therefore, it could have not blocked and just
 				// ignore the return value.
+
+				// Theoretically the response can be so fast that the listener didn't register
+				// yet, and so the 500ms timeout is to prevent that
 				select {
 				case responseChan <- response:
-				default:
+				case <-time.After(time.Millisecond * 500):
 				}
 
 				// Clean up the channel to preserve memory. It's only used once.
