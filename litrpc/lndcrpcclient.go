@@ -252,7 +252,9 @@ func (cli *LndcRpcClient) ReceiveLoop() {
 			}
 
 			// Find the response channel to send the reply to
+			cli.responseChannelMtx.Lock()
 			responseChan, ok := cli.responseChannels[response.Idx]
+			cli.responseChannelMtx.Unlock()
 			if ok {
 				// Send the response, but don't depend on someone
 				// listening. The caller decides if he's interested in the
@@ -264,6 +266,8 @@ func (cli *LndcRpcClient) ReceiveLoop() {
 				select {
 				case responseChan <- response:
 				case <-time.After(time.Millisecond * 500):
+					logging.Warnf("Unable to deliver response to responseChan for message nonce %d\n", response.Idx)
+
 				}
 
 				// Clean up the channel to preserve memory. It's only used once.
