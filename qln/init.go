@@ -3,7 +3,9 @@ package qln
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/mit-dci/lit/btcutil"
@@ -14,6 +16,7 @@ import (
 	"github.com/mit-dci/lit/eventbus"
 	"github.com/mit-dci/lit/lncore"
 	"github.com/mit-dci/lit/lnp2p"
+	"github.com/mit-dci/lit/lnutil"
 	"github.com/mit-dci/lit/logging"
 	"github.com/mit-dci/lit/portxo"
 	"github.com/mit-dci/lit/wallit"
@@ -141,19 +144,35 @@ func NewLitNode(privKey *[32]byte, path string, trackerURL string, proxyURL stri
 		// Do this in a subroutine - don't wait on it. If connections time out this takes a long time
 		// if you have a lot of preknown peers. Undesirable to halt startup for that.
 		go func() {
-			pdb := nd.NewLitDB.GetPeerDB()
-			infos, err := pdb.GetPeerInfos()
-			if err != nil {
-				logging.Warnf("Error while getting peer infos: %s", err.Error())
-				return
-			}
-			logging.Infof("init: autoreconnecting to %d peers\n", len(infos))
-			for a, _ := range infos {
-				logging.Infof("init: trying to connect to previous peer: %s\n", a)
-				_, err = nd.PeerMan.TryConnectAddress(fmt.Sprintf("%s", string(a)), nil)
+			for {
+				logging.Debug("Running autoreconnect script")
+				pdb := nd.NewLitDB.GetPeerDB()
+				peerInfos, err := pdb.GetPeerInfos()
 				if err != nil {
-					logging.Warnf("init: tried to auto-connect to %s but failed: %s\n", a, err.Error())
+					logging.Warnf("Error while getting peer peerInfos: %s", err.Error())
+					continue
 				}
+				logging.Infof("init: autoreconnecting to %d peers\n", len(peerInfos))
+				for addr, pi := range peerInfos {
+					if nd.PeerMan.GetPeerByIdx(int32(pi.PeerIdx)) != nil {
+						logging.Debug("Already connected to peer: ", pi.PeerIdx)
+						continue
+					}
+					logging.Infof("init: trying to connect to previous peer: %s\n", addr)
+					where, _, err := lnutil.Lookup(string(addr), nd.PeerMan.TrackerURL, "")
+					if err != nil {
+						logging.Error(err)
+						continue
+					}
+					if !strings.Contains(where, ":") {
+						where = fmt.Sprintf("%s:2448", where)
+					}
+					_, err = nd.PeerMan.TryConnectPeer(where, &addr, nil)
+					if err != nil {
+						logging.Warnf("init: tried to auto-connect to %s but failed: %s\n", addr, err.Error())
+					}
+				}
+				time.Sleep(60 * time.Second)
 			}
 		}()
 	}
