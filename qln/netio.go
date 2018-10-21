@@ -2,11 +2,12 @@ package qln
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/mit-dci/lit/crypto/koblitz"
 	"github.com/mit-dci/lit/lncore"
 	"github.com/mit-dci/lit/lnutil"
 	"github.com/mit-dci/lit/logging"
-	"strings"
 )
 
 // GetLisAddressAndPorts .
@@ -103,6 +104,9 @@ func (nd *LitNode) tmpSendLitMsg(msg lnutil.LitMsg) {
 	// Just wrap it and forward it off to the underlying infrastructure.
 	// There's some byte fenagling that we have to do to get all this to work right.
 	np := nd.PeerMan.GetPeerByIdx(int32(msg.Peer()))
+
+	logging.Infof("Sending message of type [%x] to msg.Peer() [%d] - which is peer.GetIdx() [%d], adr [%s]\n", msg.MsgType(), msg.Peer(), np.GetIdx(), np.GetLnAddr())
+
 	np.SendImmediateMessage(LitMsgWrapperMessage{buf[0], buf[1:]}) // being blocking might not be a huge issue here possibly?
 
 }

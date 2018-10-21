@@ -42,7 +42,7 @@ func (nd *LitNode) RemoteControlRequestHandler(msg lnutil.RemoteControlRpcReques
 		pubKey = msg.PubKey
 		transportAuthenticated = false
 	}
-	logging.Infof("Received remote control request [%s] from [%x]\nArguments Passed: %s", msg.Method, pubKey, string(msg.Args))
+	logging.Infof("Received remote control request (%d) [%s] from [%x] (peer id %d / msg peer id %d)\nArguments Passed: %s", msg.Idx, msg.Method, pubKey, string(msg.Args), peer.Idx, msg.Peer())
 
 	// Fetch the remote control authorization based on the used public key
 	auth, err := nd.GetRemoteControlAuthorization(pubKey)
@@ -207,6 +207,7 @@ func (nd *LitNode) RemoteControlRequestHandler(msg lnutil.RemoteControlRpcReques
 			replyIsError = true
 			reply = []byte("Reflection error on nd.RPC")
 		}
+		logging.Infof("Sending reply to request %d to peer %d (Error = %t)\n", msg.Idx, peer.Idx, replyIsError)
 		outMsg := lnutil.NewRemoteControlRpcResponseMsg(peer.Idx, msg.Idx, replyIsError, reply)
 		nd.tmpSendLitMsg(outMsg)
 	}()
