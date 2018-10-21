@@ -1,8 +1,6 @@
 package lnp2p
 
 import (
-	"strings"
-
 	"github.com/mit-dci/lit/eventbus"
 	"github.com/mit-dci/lit/lncore"
 	"github.com/mit-dci/lit/lndc"
@@ -31,15 +29,12 @@ func acceptConnections(listener *lndc.Listener, port int, pm *PeerManager) {
 
 		netConn, err := listener.Accept()
 		if err != nil {
-			if err.Error() != "EOF" {
-				logging.Debugf("got EOF on accepting connection, ignoring...\n")
-				continue // the testing framework generates EOFs, this is fine
-			} else if strings.Contains(err.Error(), "i/o timeout") {
-				logging.Debugf("got i/o timeout while accepting connection, ignoring...\n")
-				continue // i/o timeout on a single connection could be someone disconnecting during handhake
-			} else {
-				logging.Infof("error accepting connections, exiting: %s\n", err.Error())
+			if err.Error() == "lndc connection closed" {
+				logging.Infof("LNDC connection closed, exiting\n")
 				break // usually means the socket was closed
+			} else {
+				logging.Debugf("got an error while accepting connection: %s\n", err.Error())
+				continue // If the transport isn't closed we should keep accepting connections
 			}
 		}
 
