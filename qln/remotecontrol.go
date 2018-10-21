@@ -177,7 +177,7 @@ func (nd *LitNode) RemoteControlRequestHandler(msg lnutil.RemoteControlRpcReques
 				if err != nil {
 					logging.Errorf("Error parsing json argument: %s", err.Error())
 					replyIsError = true
-					reply = []byte(err.Error());
+					reply = []byte(err.Error())
 				} else {
 					replyType := method.Type().In(1).Elem()
 					replyPayload := reflect.New(replyType)
@@ -187,7 +187,6 @@ func (nd *LitNode) RemoteControlRequestHandler(msg lnutil.RemoteControlRpcReques
 					}
 					result := method.Call([]reflect.Value{argsPayload, replyPayload})
 
-					
 					if !result[0].IsNil() {
 						replyIsError = true
 						err = result[0].Interface().(error)
@@ -202,7 +201,7 @@ func (nd *LitNode) RemoteControlRequestHandler(msg lnutil.RemoteControlRpcReques
 				}
 			} else {
 				replyIsError = true
-				reply = []byte(fmt.Sprintf("Method %s unknown", msg.Method)
+				reply = []byte(fmt.Sprintf("Method %s unknown", msg.Method))
 			}
 		} else {
 			replyIsError = true
