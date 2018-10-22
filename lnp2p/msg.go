@@ -1,8 +1,6 @@
 package lnp2p
 
 import (
-	"sync"
-
 	"github.com/mit-dci/lit/lnutil"
 	"github.com/mit-dci/lit/logging"
 )
@@ -27,7 +25,7 @@ type outgoingmsg struct {
 
 func sendMessages(queue chan outgoingmsg) {
 	// NOTE Should we really be using the "peermgr" for log messages here?
-	peerWriteMutex := map[uint32]sync.Mutex{}
+	//peerWriteMutex := map[uint32]sync.Mutex{}
 
 	for {
 		logging.Infof("Reading message from queue @ %x...\n", &queue)
