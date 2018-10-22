@@ -146,6 +146,7 @@ func (c *Conn) Write(b []byte) (n int, err error) {
 	// If the message doesn't require any chunking, then we can go ahead
 	// with a single write.
 	if len(b) <= math.MaxUint16 {
+		c.conn.SetWriteDeadline(time.Now().Add(time.Second * 5)) // It should not take so long to write
 		return len(b), c.noise.WriteMessage(c.conn, b)
 	}
 
@@ -165,6 +166,8 @@ func (c *Conn) Write(b []byte) (n int, err error) {
 		// Slice off the next chunk to be written based on our running
 		// counter and next chunk size.
 		chunk := b[bytesWritten : bytesWritten+chunkSize]
+
+		c.conn.SetWriteDeadline(time.Now().Add(time.Second * 5)) // It should not take so long to write
 		if err := c.noise.WriteMessage(c.conn, chunk); err != nil {
 			return bytesWritten, err
 		}

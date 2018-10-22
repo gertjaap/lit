@@ -1,6 +1,8 @@
 package lnp2p
 
 import (
+	"sync"
+
 	"github.com/mit-dci/lit/lnutil"
 	"github.com/mit-dci/lit/logging"
 )
@@ -24,8 +26,8 @@ type outgoingmsg struct {
 }
 
 func sendMessages(queue chan outgoingmsg) {
-
 	// NOTE Should we really be using the "peermgr" for log messages here?
+	peerWriteMutex := map[uint32]sync.Mutex{}
 
 	for {
 		logging.Infof("Reading message from queue @ %x...\n", &queue)
@@ -56,6 +58,8 @@ func sendMessages(queue chan outgoingmsg) {
 		buf := make([]byte, len(outbytes)+1)
 		buf[0] = m.Type()
 		copy(buf[1:], outbytes)
+		/*go func() {
+		peerWriteMutex[*recv.peer.idx].Lock()*/
 
 		// Make sure the connection isn't closed.  This can happen if the message was queued but then we disconnected from the peer before it was sent.
 		conn := recv.peer.conn
@@ -64,13 +68,15 @@ func sendMessages(queue chan outgoingmsg) {
 			if recv.finishchan != nil {
 				*recv.finishchan <- nil
 			}
-			continue
+			return
 		}
 
 		// Actually write it.
 		n, err := conn.Write(buf)
+		//peerWriteMutex[*recv.peer.idx].Unlock()
 		if err != nil {
 			logging.Warnf("peermgr: Error sending message to peer: %s\n", err.Error())
+			conn.Close()
 		}
 
 		logging.Infof("Wrote %d bytes to %s\n", n, conn.RemoteAddr().String())
@@ -79,6 +85,7 @@ func sendMessages(queue chan outgoingmsg) {
 		if recv.finishchan != nil {
 			*recv.finishchan <- err
 		}
+		//}()
 
 	}
 
