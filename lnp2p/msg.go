@@ -28,7 +28,7 @@ func sendMessages(queue chan outgoingmsg) {
 	// NOTE Should we really be using the "peermgr" for log messages here?
 
 	for {
-		logging.Info("Reading message from queue @ %s...\n", &queue)
+		logging.Infof("Reading message from queue @ %x...\n", &queue)
 		recv := <-queue
 		logging.Info("Got message from queue\n")
 		m := *recv.message
