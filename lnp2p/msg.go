@@ -27,9 +27,18 @@ func sendMessages(queue chan outgoingmsg) {
 	// NOTE Should we really be using the "peermgr" for log messages here?
 	//peerWriteMutex := map[uint32]sync.Mutex{}
 
+	reconnectedPeers := map[*Peer]*Peer{}
+
 	for {
 		recv := <-queue
 		m := *recv.message
+
+		peer, ok := reconnectedPeers[recv.peer]
+		if ok {
+			logging.Infof("Found a new peer [%x] for peer [%x]", peer, recv.peer)
+			//We reconnected this peer earlier - so use the new one
+			recv.peer = peer
+		}
 
 		// Sending a message with a nil peer is how we signal to "stop sending things".
 		if recv.peer == nil {
@@ -75,10 +84,14 @@ func sendMessages(queue chan outgoingmsg) {
 			// This connection is no longer good, so close it
 			recv.peer.pmgr.DisconnectPeer(recv.peer)
 
-			// Reconnect to this peer for the future
-			go func() {
-				recv.peer.pmgr.TryConnectAddress(string(recv.peer.GetLnAddr()), nil)
-			}()
+			// Reconnect to this peer
+			peer, err := recv.peer.pmgr.TryConnectAddress(string(recv.peer.GetLnAddr()), nil)
+			if err != nil {
+				logging.Warnf("Could not reconnect to peer %s: %s", recv.peer.GetLnAddr(), err)
+			} else {
+				reconnectedPeers[recv.peer] = peer
+				queue <- outgoingmsg{peer, recv.message, recv.finishchan}
+			}
 		}
 
 		// Responses, if applicable.
