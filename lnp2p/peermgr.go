@@ -55,7 +55,7 @@ type PeerManager struct {
 	mtx *sync.Mutex
 }
 
-const outgoingbuf = 1024
+const outgoingbuf = 16
 
 // NetSettings is a container struct for misc network settings like NAT
 // holepunching and proxies.
@@ -448,6 +448,7 @@ func (pm *PeerManager) queueMessageToPeer(peer *Peer, msg Message, ec *chan erro
 	if !pm.sending {
 		return fmt.Errorf("sending is disabled on this peer manager, need to start it?")
 	}
+	logging.Infof("Queueing message messge %x to %d - queue nil: %t\n", msg.Type(), peer.GetIdx(), pm.outqueue == nil)
 	pm.outqueue <- outgoingmsg{peer, &msg, ec}
 	logging.Infof("Queued messge %x to %d\n", msg.Type(), peer.GetIdx())
 	return nil
