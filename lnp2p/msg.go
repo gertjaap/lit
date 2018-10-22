@@ -28,9 +28,7 @@ func sendMessages(queue chan outgoingmsg) {
 	//peerWriteMutex := map[uint32]sync.Mutex{}
 
 	for {
-		logging.Infof("Reading message from queue @ %x...\n", &queue)
 		recv := <-queue
-		logging.Info("Got message from queue\n")
 		m := *recv.message
 
 		// Sending a message with a nil peer is how we signal to "stop sending things".
@@ -70,14 +68,18 @@ func sendMessages(queue chan outgoingmsg) {
 		}
 
 		// Actually write it.
-		n, err := conn.Write(buf)
+		_, err := conn.Write(buf)
 		//peerWriteMutex[*recv.peer.idx].Unlock()
 		if err != nil {
 			logging.Warnf("peermgr: Error sending message to peer: %s\n", err.Error())
-			conn.Close()
-		}
+			// This connection is no longer good, so close it
+			recv.peer.pmgr.DisconnectPeer(recv.peer)
 
-		logging.Infof("Wrote %d bytes to %s\n", n, conn.RemoteAddr().String())
+			// Reconnect to this peer for the future
+			go func() {
+				recv.peer.pmgr.TryConnectAddress(string(recv.peer.GetLnAddr()), nil)
+			}()
+		}
 
 		// Responses, if applicable.
 		if recv.finishchan != nil {
