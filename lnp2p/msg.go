@@ -28,7 +28,9 @@ func sendMessages(queue chan outgoingmsg) {
 	// NOTE Should we really be using the "peermgr" for log messages here?
 
 	for {
+		logging.Info("Reading message from queue @ %s...\n", &queue)
 		recv := <-queue
+		logging.Info("Got message from queue\n")
 		m := *recv.message
 
 		// Sending a message with a nil peer is how we signal to "stop sending things".

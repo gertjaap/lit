@@ -448,7 +448,7 @@ func (pm *PeerManager) queueMessageToPeer(peer *Peer, msg Message, ec *chan erro
 	if !pm.sending {
 		return fmt.Errorf("sending is disabled on this peer manager, need to start it?")
 	}
-	logging.Infof("Queueing message messge %x to %d - queue nil: %t\n", msg.Type(), peer.GetIdx(), pm.outqueue == nil)
+	logging.Infof("Queueing message messge %x to %d - queue nil: %t - queue address: %x\n", msg.Type(), peer.GetIdx(), pm.outqueue == nil, &(pm.outqueue))
 	pm.outqueue <- outgoingmsg{peer, &msg, ec}
 	logging.Infof("Queued messge %x to %d\n", msg.Type(), peer.GetIdx())
 	return nil
