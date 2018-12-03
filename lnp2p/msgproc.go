@@ -76,7 +76,8 @@ func (mp *MessageProcessor) HandleMessage(peer *Peer, buf []byte) error {
 	}
 
 	var err error
-
+	// TODO: Change wire protocol
+	logging.Debug("Received a message from peer: ", buf)
 	// First see if we have handlers defined for this message type.
 	mtype := binary.BigEndian.Uint16(buf[0:])
 	h := mp.handlers[mtype]

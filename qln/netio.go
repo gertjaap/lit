@@ -22,12 +22,7 @@ func (nd *LitNode) GetLisAddressAndPorts() (string, []string) {
 // TODO Remove this function.
 func (nd *LitNode) FindPeerIndexByAddress(lnAdr string) (uint32, error) {
 	pm := nd.PeerMan
-	lnaddr, err := lncore.ParseLnAddr(lnAdr)
-	if err != nil {
-		return 0, err
-	}
-
-	p := pm.GetPeer(lnaddr)
+	p := pm.GetPeer(lncore.LnAddr(lnAdr))
 	if p != nil {
 		return p.GetIdx(), nil
 	}
@@ -47,6 +42,7 @@ func (nd *LitNode) TCPListener(port int) (string, error) {
 
 	lnaddr := nd.PeerMan.GetExternalAddress()
 
+	logging.Infof("My raw hex Public Key is: %s", nd.PeerMan.GetExternalPubkeyString())
 	logging.Infof("Listening with ln address: %s \n", lnaddr)
 
 	// Don't announce on the tracker if we are communicating via SOCKS proxy
@@ -87,12 +83,10 @@ func splitAdrString(adr string) (string, string) {
 // TODO Remove this.
 func (nd *LitNode) DialPeer(connectAdr string) error {
 
-	_, err := nd.PeerMan.TryConnectAddress(connectAdr)
+	err := nd.PeerMan.TryConnectAddress(connectAdr, nil)
 	if err != nil {
 		return err
 	}
-
-	// TEMP The event handler handles actually setting up the peer in the LitNode
 
 	return nil
 }
