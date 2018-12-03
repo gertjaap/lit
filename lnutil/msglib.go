@@ -2148,7 +2148,7 @@ func NewMultihopPaymentRequestMsgFromBytes(b []byte,
 	msg := new(MultihopPaymentRequestMsg)
 	msg.PeerIdx = peerIdx
 
-	buf := bytes.NewBuffer(b[1:])
+	buf := bytes.NewBuffer(b[2:])
 
 	err := binary.Read(buf, binary.BigEndian, &msg.Cointype)
 	if err != nil {
@@ -2265,7 +2265,7 @@ func NewRemoteControlRpcRequestMsgFromBytes(b []byte,
 	msg := new(RemoteControlRpcRequestMsg)
 	msg.PeerIdx = peerIdx
 
-	buf := bytes.NewBuffer(b[1:])
+	buf := bytes.NewBuffer(b[2:])
 	copy(msg.PubKey[:], buf.Next(33))
 	copy(msg.Sig[:], buf.Next(64))
 	binary.Read(buf, binary.BigEndian, &msg.DigestType)
@@ -2440,7 +2440,7 @@ func NewRemoteControlRpcResponseMsgFromBytes(b []byte,
 	peerIdx uint32) (RemoteControlRpcResponseMsg, error) {
 
 	msg := new(RemoteControlRpcResponseMsg)
-	buf := bytes.NewBuffer(b[1:])
+	buf := bytes.NewBuffer(b[2:])
 
 	msg.PeerIdx = peerIdx
 	binary.Read(buf, binary.BigEndian, &msg.Idx)

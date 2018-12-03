@@ -223,7 +223,7 @@ func (cli *LndcRpcClient) ReceiveLoop() {
 		}
 		msg = msg[:n]
 
-		mtype := binary.BigEndian.Uint16(msg[0:1])
+		mtype := binary.BigEndian.Uint16(msg[0:2])
 
 		// We only care about RPC responses (for now)
 		if mtype == lnutil.MSGID_REMOTE_RPCRESPONSE {
