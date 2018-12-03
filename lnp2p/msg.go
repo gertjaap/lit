@@ -1,6 +1,8 @@
 package lnp2p
 
 import (
+	"encoding/binary"
+
 	"github.com/mit-dci/lit/lnutil"
 	"github.com/mit-dci/lit/logging"
 )
@@ -50,9 +52,9 @@ func sendMessages(queue chan outgoingmsg) {
 
 		// Assemble the final message, with type prepended.
 		outbytes := m.Bytes()
-		buf := make([]byte, len(outbytes)+1)
-		buf[0] = m.Type()
-		copy(buf[1:], outbytes)
+		buf := make([]byte, len(outbytes)+2)
+		binary.BigEndian.PutUint16(buf[:], uint16(m.Type()))
+		copy(buf[2:], outbytes)
 
 		// Make sure the connection isn't closed.  This can happen if the message was queued but then we disconnected from the peer before it was sent.
 		conn := recv.peer.conn

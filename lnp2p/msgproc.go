@@ -1,9 +1,11 @@
 package lnp2p
 
 import (
+	"encoding/binary"
 	"fmt"
-	"github.com/mit-dci/lit/logging"
 	"sync"
+
+	"github.com/mit-dci/lit/logging"
 )
 
 // ParseFuncType is the type of a Message parser function.
@@ -19,7 +21,7 @@ type messagehandler struct {
 
 // MessageProcessor is can be given messages and figures out how to parse them and which function to call.
 type MessageProcessor struct {
-	handlers [256]*messagehandler
+	handlers [65536]*messagehandler
 
 	// This is for keeping track of if we're making changes to the message
 	// processor.  Locking and unlocking is slow and shouldn't be necessary when
@@ -33,7 +35,7 @@ type MessageProcessor struct {
 // NewMessageProcessor processes messages coming in from over the network.
 func NewMessageProcessor() MessageProcessor {
 	return MessageProcessor{
-		handlers: [256]*messagehandler{},
+		handlers: [65536]*messagehandler{},
 		active:   false,
 		actmtx:   &sync.Mutex{},
 	}
@@ -76,14 +78,14 @@ func (mp *MessageProcessor) HandleMessage(peer *Peer, buf []byte) error {
 	var err error
 
 	// First see if we have handlers defined for this message type.
-	mtype := buf[0]
+	mtype := binary.BigEndian.Uint16(buf[0:])
 	h := mp.handlers[mtype]
 	if h == nil {
 		return fmt.Errorf("no handler found for messasge of type %x", mtype)
 	}
 
 	// Parse the message.
-	parsed, err := h.parseFunc(buf[1:])
+	parsed, err := h.parseFunc(buf[2:])
 	if err != nil {
 		logging.Warnf("msgproc: Malformed message of type %x from peer %s\n", mtype, peer.GetPrettyName())
 		return err
