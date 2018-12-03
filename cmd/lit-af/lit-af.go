@@ -163,6 +163,13 @@ func (lc *litAfClient) litAfSetup(conf litAfConfig) error {
 		if err != nil {
 			logging.Fatal(err.Error())
 		}
+	} else if len(adr) == 0 {
+		// so the user didn't provide us with an address to connect to
+		// we need to connect to the locally running lit-af instance
+		lc.RPCClient, err = litrpc.NewLocalLndcRpcClientWithHomeDirAndPort(defaultDir, port)
+		if err != nil {
+			logging.Fatal(err.Error())
+		}
 	}
 	return nil
 }
