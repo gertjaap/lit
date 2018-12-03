@@ -62,8 +62,8 @@ func (nd *LitNode) registerHandlers() {
 // handles stuff that comes in over the wire.  Not user-initiated.
 func (nd *LitNode) PeerHandler(msg lnutil.LitMsg, q *Qchan, peer *RemotePeer) error {
 	logging.Infof("Message from %d type %x", msg.Peer(), msg.MsgType())
-	switch msg.MsgType() & 0xf0 {
-	case 0x00: // TEXT MESSAGE.  SIMPLE
+	switch msg.MsgType() & 0xfff0 {
+	case 0x1000: // TEXT MESSAGE.  SIMPLE
 		chat, ok := msg.(lnutil.ChatMsg)
 		if !ok {
 			return fmt.Errorf("can't cast to chat message")
@@ -72,13 +72,13 @@ func (nd *LitNode) PeerHandler(msg lnutil.LitMsg, q *Qchan, peer *RemotePeer) er
 			"\nmsg from %s: %s", lnutil.White(msg.Peer()), lnutil.Green(chat.Text))
 		return nil // no error
 
-	case 0x10: //Making Channel, or using
+	case 0x1010: //Making Channel, or using
 		return nd.ChannelHandler(msg, peer)
 
-	case 0x20: //Closing
+	case 0x1020: //Closing
 		return nd.CloseHandler(msg)
 
-	case 0x30: //PushPull
+	case 0x1030: //PushPull
 		if q == nil {
 			return fmt.Errorf("pushpull message but no matching channel")
 		}
@@ -93,7 +93,7 @@ func (nd *LitNode) PeerHandler(msg lnutil.LitMsg, q *Qchan, peer *RemotePeer) er
 		return nd.SelfPushHandler(msg)
 	*/
 
-	case 0x60: //Tower Messages
+	case 0x1070: //Tower Messages
 		if msg.MsgType() == lnutil.MSGID_WATCH_DESC {
 			return nd.Tower.NewChannel(msg.(lnutil.WatchDescMsg))
 		}
@@ -104,10 +104,12 @@ func (nd *LitNode) PeerHandler(msg lnutil.LitMsg, q *Qchan, peer *RemotePeer) er
 			return nd.Tower.DeleteChannel(msg.(lnutil.WatchDelMsg))
 		}
 
-	case 0x70: // Routing messages
+	case 0x1080: // Routing messages
 		if msg.MsgType() == lnutil.MSGID_LINK_DESC {
 			nd.LinkMsgHandler(msg.(lnutil.LinkMsg))
 		}
+
+	case 0x1090: // Multihop messages
 		if msg.MsgType() == lnutil.MSGID_PAY_REQ {
 			return nd.MultihopPaymentRequestHandler(msg.(lnutil.MultihopPaymentRequestMsg))
 		}
@@ -118,10 +120,11 @@ func (nd *LitNode) PeerHandler(msg lnutil.LitMsg, q *Qchan, peer *RemotePeer) er
 			return nd.MultihopPaymentSetupHandler(msg.(lnutil.MultihopPaymentSetupMsg))
 		}
 
-	case 0xA0: // Dual Funding messages
+	case 0x10C0: // Dual Funding messages
 		return nd.DualFundingHandler(msg, peer)
 
-	case 0x90: // Discreet log contract messages
+	case 0x10A0: // Discreet log contract messages
+	case 0x10B0: // Discreet log contract messages
 		if msg.MsgType() == lnutil.MSGID_DLC_OFFER {
 			nd.DlcOfferHandler(msg.(lnutil.DlcOfferMsg), peer)
 		}
@@ -142,7 +145,7 @@ func (nd *LitNode) PeerHandler(msg lnutil.LitMsg, q *Qchan, peer *RemotePeer) er
 			nd.DlcSigProofHandler(msg.(lnutil.DlcContractSigProofMsg), peer)
 		}
 
-	case 0xB0: // remote control
+	case 0x10D0: // remote control
 		if msg.MsgType() == lnutil.MSGID_REMOTE_RPCREQUEST {
 			nd.RemoteControlRequestHandler(msg.(lnutil.RemoteControlRpcRequestMsg), peer)
 		}
@@ -150,7 +153,7 @@ func (nd *LitNode) PeerHandler(msg lnutil.LitMsg, q *Qchan, peer *RemotePeer) er
 			nd.RemoteControlResponseHandler(msg.(lnutil.RemoteControlRpcResponseMsg), peer)
 		}
 	default:
-		return fmt.Errorf("Unknown message id byte %x &f0", msg.MsgType())
+		return fmt.Errorf("Unknown message id byte %x &fff0", msg.MsgType())
 
 	}
 	return nil

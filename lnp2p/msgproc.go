@@ -42,7 +42,7 @@ func NewMessageProcessor() MessageProcessor {
 }
 
 // DefineMessage defines processing routines for a particular message type.
-func (mp *MessageProcessor) DefineMessage(mtype uint8, pfunc ParseFuncType, hfunc HandleFuncType) {
+func (mp *MessageProcessor) DefineMessage(mtype uint16, pfunc ParseFuncType, hfunc HandleFuncType) {
 	mp.actmtx.Lock()
 	act := mp.active
 	mp.active = false

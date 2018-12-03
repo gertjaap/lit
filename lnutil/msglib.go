@@ -12,66 +12,66 @@ import (
 
 //id numbers for messages, semi-arbitrary
 const (
-	MSGID_TEXTCHAT = 0x00 // send a text message
+	MSGID_TEXTCHAT = 0x1001 // send a text message
 
 	//Channel creation messages
-	MSGID_POINTREQ  = 0x10
-	MSGID_POINTRESP = 0x11
-	MSGID_CHANDESC  = 0x12
-	MSGID_CHANACK   = 0x13
-	MSGID_SIGPROOF  = 0x14
+	MSGID_POINTREQ  = 0x1011
+	MSGID_POINTRESP = 0x1013
+	MSGID_CHANDESC  = 0x1015
+	MSGID_CHANACK   = 0x1017
+	MSGID_SIGPROOF  = 0x1019
 
 	//Channel destruction messages
-	MSGID_CLOSEREQ  = 0x20 // close channel
-	MSGID_CLOSERESP = 0x21
+	MSGID_CLOSEREQ  = 0x1021 // close channel
+	MSGID_CLOSERESP = 0x1022
 
 	//Push Pull Messages
-	MSGID_DELTASIG  = 0x30 // pushing funds in channel; request to send
-	MSGID_SIGREV    = 0x31 // pulling funds; signing new state and revoking old
-	MSGID_GAPSIGREV = 0x32 // resolving collision
-	MSGID_REV       = 0x33 // pushing funds; revoking previous channel state
+	MSGID_DELTASIG  = 0x1031 // pushing funds in channel; request to send
+	MSGID_SIGREV    = 0x1033 // pulling funds; signing new state and revoking old
+	MSGID_GAPSIGREV = 0x1035 // resolving collision
+	MSGID_REV       = 0x1037 // pushing funds; revoking previous channel state
 
 	// HTLC messages
-	MSGID_HASHSIG     = 0x34 // Like a deltasig but offers an HTLC
-	MSGID_PREIMAGESIG = 0x35 // Like a hashsig but clears an HTLC
+	MSGID_HASHSIG     = 0x1041 // Like a deltasig but offers an HTLC
+	MSGID_PREIMAGESIG = 0x1043 // Like a hashsig but clears an HTLC
 
 	//not implemented
-	MSGID_FWDMSG     = 0x40
-	MSGID_FWDAUTHREQ = 0x41
+	MSGID_FWDMSG     = 0x1051
+	MSGID_FWDAUTHREQ = 0x1053
 
 	//not implemented
-	MSGID_SELFPUSH = 0x50
+	MSGID_SELFPUSH = 0x1061
 
 	//Tower Messages
-	MSGID_WATCH_DESC     = 0x60 // desc describes a new channel
-	MSGID_WATCH_STATEMSG = 0x61 // commsg is a single state in the channel
-	MSGID_WATCH_DELETE   = 0x62 // Watch_clear marks a channel as ok to delete.  No further updates possible.
+	MSGID_WATCH_DESC     = 0x1071 // desc describes a new channel
+	MSGID_WATCH_STATEMSG = 0x1073 // commsg is a single state in the channel
+	MSGID_WATCH_DELETE   = 0x1075 // Watch_clear marks a channel as ok to delete.  No further updates possible.
 
 	//Routing messages
-	MSGID_LINK_DESC = 0x70 // Describes a new channel for routing
+	MSGID_LINK_DESC = 0x1081 // Describes a new channel for routing
 
 	//Multihop payment messages
-	MSGID_PAY_REQ   = 0x75 // Request payment
-	MSGID_PAY_ACK   = 0x76 // Acknowledge payment (share preimage hash)
-	MSGID_PAY_SETUP = 0x77 // Setup a payment route
+	MSGID_PAY_REQ   = 0x1091 // Request payment
+	MSGID_PAY_ACK   = 0x1093 // Acknowledge payment (share preimage hash)
+	MSGID_PAY_SETUP = 0x1095 // Setup a payment route
 
 	//Discreet log contracts messages
-	MSGID_DLC_OFFER               = 0x90 // Offer a contract
-	MSGID_DLC_ACCEPTOFFER         = 0x91 // Accept the contract
-	MSGID_DLC_DECLINEOFFER        = 0x92 // Decline the contract
-	MSGID_DLC_CONTRACTACK         = 0x93 // Acknowledge an acceptance
-	MSGID_DLC_CONTRACTFUNDINGSIGS = 0x94 // Funding signatures
-	MSGID_DLC_SIGPROOF            = 0x95 // Sigproof
+	MSGID_DLC_OFFER               = 0x10A1 // Offer a contract
+	MSGID_DLC_ACCEPTOFFER         = 0x10A3 // Accept the contract
+	MSGID_DLC_DECLINEOFFER        = 0x10A5 // Decline the contract
+	MSGID_DLC_CONTRACTACK         = 0x10A7 // Acknowledge an acceptance
+	MSGID_DLC_CONTRACTFUNDINGSIGS = 0x10A9 // Funding signatures
+	MSGID_DLC_SIGPROOF            = 0x10B1 // Sigproof
 
 	//Dual funding messages
-	MSGID_DUALFUNDINGREQ     = 0xA0 // Requests funding details (UTXOs, Change address, Pubkey), including our own details and amount needed.
-	MSGID_DUALFUNDINGACCEPT  = 0xA1 // Responds with funding details
-	MSGID_DUALFUNDINGDECL    = 0xA2 // Declines the funding request
-	MSGID_DUALFUNDINGCHANACK = 0xA3 // Acknowledges channel and sends along signatures for funding
+	MSGID_DUALFUNDINGREQ     = 0x10C1 // Requests funding details (UTXOs, Change address, Pubkey), including our own details and amount needed.
+	MSGID_DUALFUNDINGACCEPT  = 0x10C3 // Responds with funding details
+	MSGID_DUALFUNDINGDECL    = 0x10C5 // Declines the funding request
+	MSGID_DUALFUNDINGCHANACK = 0x10C7 // Acknowledges channel and sends along signatures for funding
 
 	//Remote control messages
-	MSGID_REMOTE_RPCREQUEST  = 0xB0 // Contains an RPC request from a remote peer
-	MSGID_REMOTE_RPCRESPONSE = 0xB1 // Contains an RPC response to send to a remote peer
+	MSGID_REMOTE_RPCREQUEST  = 0x10D1 // Contains an RPC request from a remote peer
+	MSGID_REMOTE_RPCRESPONSE = 0x10D3 // Contains an RPC response to send to a remote peer
 
 	DIGEST_TYPE_SHA256    = 0x00
 	DIGEST_TYPE_RIPEMD160 = 0x01
@@ -79,9 +79,9 @@ const (
 
 //interface that all messages follow, for easy use
 type LitMsg interface {
-	Peer() uint32   //return PeerIdx
-	MsgType() uint8 //returns Message Type (see constants above)
-	Bytes() []byte  //returns data of message as []byte with the MsgType() preceding it
+	Peer() uint32    //return PeerIdx
+	MsgType() uint16 //returns Message Type (see constants above)
+	Bytes() []byte   //returns data of message as []byte with the MsgType() preceding it
 }
 
 func LitMsgEqual(msg LitMsg, msg2 LitMsg) bool {
@@ -93,10 +93,10 @@ func LitMsgEqual(msg LitMsg, msg2 LitMsg) bool {
 
 //method for finding what type of message a generic []byte is
 func LitMsgFromBytes(b []byte, peerid uint32) (LitMsg, error) {
-	if len(b) < 1 {
+	if len(b) < 2 {
 		return nil, fmt.Errorf("The byte slice sent is empty")
 	}
-	msgType := b[0] // first byte signifies what type of message is
+	msgType := binary.BigEndian.Uint16(b[0:]) // first byte signifies what type of message is
 
 	switch msgType {
 	case MSGID_TEXTCHAT:
@@ -207,11 +207,11 @@ func NewChatMsgFromBytes(b []byte, peerid uint32) (ChatMsg, error) {
 	c := new(ChatMsg)
 	c.PeerIdx = peerid
 
-	if len(b) <= 1 {
-		return *c, fmt.Errorf("got %d bytes, expect 2 or more", len(b))
+	if len(b) <= 2 {
+		return *c, fmt.Errorf("got %d bytes, expect 3 or more", len(b))
 	}
 
-	b = b[1:]
+	b = b[2:]
 	c.Text = string(b)
 
 	return *c, nil
@@ -219,13 +219,15 @@ func NewChatMsgFromBytes(b []byte, peerid uint32) (ChatMsg, error) {
 
 func (self ChatMsg) Bytes() []byte {
 	var msg []byte
-	msg = append(msg, self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	msg = append(msg, msgType[:]...)
 	msg = append(msg, []byte(self.Text)...)
 	return msg
 }
 
-func (self ChatMsg) Peer() uint32   { return self.PeerIdx }
-func (self ChatMsg) MsgType() uint8 { return MSGID_TEXTCHAT }
+func (self ChatMsg) Peer() uint32    { return self.PeerIdx }
+func (self ChatMsg) MsgType() uint16 { return MSGID_TEXTCHAT }
 
 //----------
 
@@ -247,11 +249,11 @@ func NewPointReqMsgFromBytes(b []byte, peerid uint32) (PointReqMsg, error) {
 	pr := new(PointReqMsg)
 	pr.PeerIdx = peerid
 
-	if len(b) < 5 {
-		return *pr, fmt.Errorf("PointReq msg %d bytes, expect 5\n", len(b))
+	if len(b) < 6 {
+		return *pr, fmt.Errorf("PointReq msg %d bytes, expect 6\n", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 	coin := buf.Next(4)
 	pr.Cointype = BtU32(coin)
 
@@ -260,14 +262,16 @@ func NewPointReqMsgFromBytes(b []byte, peerid uint32) (PointReqMsg, error) {
 
 func (self PointReqMsg) Bytes() []byte {
 	var msg []byte
-	msg = append(msg, self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	msg = append(msg, msgType[:]...)
 	coin := U32tB(self.Cointype)
 	msg = append(msg, coin[:]...)
 	return msg
 }
 
-func (self PointReqMsg) Peer() uint32   { return self.PeerIdx }
-func (self PointReqMsg) MsgType() uint8 { return MSGID_POINTREQ }
+func (self PointReqMsg) Peer() uint32    { return self.PeerIdx }
+func (self PointReqMsg) MsgType() uint16 { return MSGID_POINTREQ }
 
 //message to be used for reply to point request
 type PointRespMsg struct {
@@ -298,12 +302,12 @@ func NewPointRespMsg(peerid uint32, chanpub [33]byte, refundpub [33]byte,
 func NewPointRespMsgFromBytes(b []byte, peerid uint32) (PointRespMsg, error) {
 	pm := new(PointRespMsg)
 
-	if len(b) < 166 {
-		return *pm, fmt.Errorf("PointResp err: msg %d bytes, expect 166\n", len(b))
+	if len(b) < 167 {
+		return *pm, fmt.Errorf("PointResp err: msg %d bytes, expect 167\n", len(b))
 	}
 
 	pm.PeerIdx = peerid
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 	copy(pm.ChannelPub[:], buf.Next(33))
 	copy(pm.RefundPub[:], buf.Next(33))
 	copy(pm.HAKDbase[:], buf.Next(33))
@@ -315,7 +319,9 @@ func NewPointRespMsgFromBytes(b []byte, peerid uint32) (PointRespMsg, error) {
 
 func (self PointRespMsg) Bytes() []byte {
 	var msg []byte
-	msg = append(msg, self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	msg = append(msg, msgType[:]...)
 	msg = append(msg, self.ChannelPub[:]...)
 	msg = append(msg, self.RefundPub[:]...)
 	msg = append(msg, self.HAKDbase[:]...)
@@ -324,8 +330,8 @@ func (self PointRespMsg) Bytes() []byte {
 	return msg
 }
 
-func (self PointRespMsg) Peer() uint32   { return self.PeerIdx }
-func (self PointRespMsg) MsgType() uint8 { return MSGID_POINTRESP }
+func (self PointRespMsg) Peer() uint32    { return self.PeerIdx }
+func (self PointRespMsg) MsgType() uint16 { return MSGID_POINTRESP }
 
 //message with a channel's description
 type ChanDescMsg struct {
@@ -378,11 +384,11 @@ func NewChanDescMsgFromBytes(b []byte, peerid uint32) (ChanDescMsg, error) {
 	cm := new(ChanDescMsg)
 	cm.PeerIdx = peerid
 
-	if len(b) < 283 {
-		return *cm, fmt.Errorf("got %d byte channel description, expect 283", len(b))
+	if len(b) < 284 {
+		return *cm, fmt.Errorf("got %d byte channel description, expect 284", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 	var op [36]byte
 	copy(op[:], buf.Next(36))
 	cm.Outpoint = *OutPointFromBytes(op)
@@ -409,7 +415,9 @@ func (self ChanDescMsg) Bytes() []byte {
 
 	var msg []byte
 	opArr := OutPointToBytes(self.Outpoint)
-	msg = append(msg, self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	msg = append(msg, msgType[:]...)
 	msg = append(msg, opArr[:]...)
 	msg = append(msg, self.PubKey[:]...)
 	msg = append(msg, self.RefundPub[:]...)
@@ -426,8 +434,8 @@ func (self ChanDescMsg) Bytes() []byte {
 	return msg
 }
 
-func (self ChanDescMsg) Peer() uint32   { return self.PeerIdx }
-func (self ChanDescMsg) MsgType() uint8 { return MSGID_CHANDESC }
+func (self ChanDescMsg) Peer() uint32    { return self.PeerIdx }
+func (self ChanDescMsg) MsgType() uint16 { return MSGID_CHANDESC }
 
 //message for channel acknowledgement after description message
 type ChanAckMsg struct {
@@ -454,11 +462,11 @@ func NewChanAckMsgFromBytes(b []byte, peerid uint32) (ChanAckMsg, error) {
 	cm := new(ChanAckMsg)
 	cm.PeerIdx = peerid
 
-	if len(b) < 200 {
-		return *cm, fmt.Errorf("got %d byte multiAck, expect 200", len(b))
+	if len(b) < 201 {
+		return *cm, fmt.Errorf("got %d byte multiAck, expect 201", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 
 	var op [36]byte
 	copy(op[:], buf.Next(36))
@@ -473,7 +481,9 @@ func NewChanAckMsgFromBytes(b []byte, peerid uint32) (ChanAckMsg, error) {
 func (self ChanAckMsg) Bytes() []byte {
 	var msg []byte
 	opArr := OutPointToBytes(self.Outpoint)
-	msg = append(msg, self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	msg = append(msg, msgType[:]...)
 	msg = append(msg, opArr[:]...)
 	msg = append(msg, self.ElkZero[:]...)
 	msg = append(msg, self.ElkOne[:]...)
@@ -482,8 +492,8 @@ func (self ChanAckMsg) Bytes() []byte {
 	return msg
 }
 
-func (self ChanAckMsg) Peer() uint32   { return self.PeerIdx }
-func (self ChanAckMsg) MsgType() uint8 { return MSGID_CHANACK }
+func (self ChanAckMsg) Peer() uint32    { return self.PeerIdx }
+func (self ChanAckMsg) MsgType() uint16 { return MSGID_CHANACK }
 
 //message for proof for a signature
 type SigProofMsg struct {
@@ -504,11 +514,11 @@ func NewSigProofMsgFromBytes(b []byte, peerid uint32) (SigProofMsg, error) {
 	sm := new(SigProofMsg)
 	sm.PeerIdx = peerid
 
-	if len(b) < 101 {
-		return *sm, fmt.Errorf("got %d byte Sigproof, expect ~101\n", len(b))
+	if len(b) < 102 {
+		return *sm, fmt.Errorf("got %d byte Sigproof, expect ~102\n", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 
 	var op [36]byte
 	copy(op[:], buf.Next(36))
@@ -519,15 +529,17 @@ func NewSigProofMsgFromBytes(b []byte, peerid uint32) (SigProofMsg, error) {
 
 func (self SigProofMsg) Bytes() []byte {
 	var msg []byte
-	msg = append(msg, self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	msg = append(msg, msgType[:]...)
 	opArr := OutPointToBytes(self.Outpoint)
 	msg = append(msg, opArr[:]...)
 	msg = append(msg, self.Signature[:]...)
 	return msg
 }
 
-func (self SigProofMsg) Peer() uint32   { return self.PeerIdx }
-func (self SigProofMsg) MsgType() uint8 { return MSGID_SIGPROOF }
+func (self SigProofMsg) Peer() uint32    { return self.PeerIdx }
+func (self SigProofMsg) MsgType() uint16 { return MSGID_SIGPROOF }
 
 //----------
 
@@ -550,11 +562,11 @@ func NewCloseReqMsgFromBytes(b []byte, peerid uint32) (CloseReqMsg, error) {
 	crm := new(CloseReqMsg)
 	crm.PeerIdx = peerid
 
-	if len(b) < 101 {
-		return *crm, fmt.Errorf("got %d byte closereq, expect 101ish\n", len(b))
+	if len(b) < 102 {
+		return *crm, fmt.Errorf("got %d byte closereq, expect 102ish\n", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 
 	var op [36]byte
 	copy(op[:], buf.Next(36))
@@ -566,15 +578,17 @@ func NewCloseReqMsgFromBytes(b []byte, peerid uint32) (CloseReqMsg, error) {
 
 func (self CloseReqMsg) Bytes() []byte {
 	var msg []byte
-	msg = append(msg, self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	msg = append(msg, msgType[:]...)
 	opArr := OutPointToBytes(self.Outpoint)
 	msg = append(msg, opArr[:]...)
 	msg = append(msg, self.Signature[:]...)
 	return msg
 }
 
-func (self CloseReqMsg) Peer() uint32   { return self.PeerIdx }
-func (self CloseReqMsg) MsgType() uint8 { return MSGID_CLOSEREQ }
+func (self CloseReqMsg) Peer() uint32    { return self.PeerIdx }
+func (self CloseReqMsg) MsgType() uint16 { return MSGID_CLOSEREQ }
 
 //----------
 
@@ -603,11 +617,11 @@ func NewDeltaSigMsgFromBytes(b []byte, peerid uint32) (DeltaSigMsg, error) {
 	ds := new(DeltaSigMsg)
 	ds.PeerIdx = peerid
 
-	if len(b) < 105 {
-		return *ds, fmt.Errorf("got %d byte DeltaSig, expect 105", len(b))
+	if len(b) < 106 {
+		return *ds, fmt.Errorf("got %d byte DeltaSig, expect 106", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 
 	var op [36]byte
 	copy(op[:], buf.Next(36))
@@ -630,7 +644,9 @@ func NewDeltaSigMsgFromBytes(b []byte, peerid uint32) (DeltaSigMsg, error) {
 
 func (self DeltaSigMsg) Bytes() []byte {
 	var msg []byte
-	msg = append(msg, self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	msg = append(msg, msgType[:]...)
 	opArr := OutPointToBytes(self.Outpoint)
 	msg = append(msg, opArr[:]...)
 	msg = append(msg, I32tB(self.Delta)...)
@@ -642,8 +658,8 @@ func (self DeltaSigMsg) Bytes() []byte {
 	return msg
 }
 
-func (self DeltaSigMsg) Peer() uint32   { return self.PeerIdx }
-func (self DeltaSigMsg) MsgType() uint8 { return MSGID_DELTASIG }
+func (self DeltaSigMsg) Peer() uint32    { return self.PeerIdx }
+func (self DeltaSigMsg) MsgType() uint16 { return MSGID_DELTASIG }
 
 //a message that pushes using channel information
 type SigRevMsg struct {
@@ -673,11 +689,11 @@ func NewSigRevFromBytes(b []byte, peerid uint32) (SigRevMsg, error) {
 	sr := new(SigRevMsg)
 	sr.PeerIdx = peerid
 
-	if len(b) < 166 {
-		return *sr, fmt.Errorf("got %d byte SIGREV, expect 166", len(b))
+	if len(b) < 167 {
+		return *sr, fmt.Errorf("got %d byte SIGREV, expect 167", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 
 	var op [36]byte
 	copy(op[:], buf.Next(36))
@@ -701,7 +717,9 @@ func NewSigRevFromBytes(b []byte, peerid uint32) (SigRevMsg, error) {
 
 func (self SigRevMsg) Bytes() []byte {
 	var msg []byte
-	msg = append(msg, self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	msg = append(msg, msgType[:]...)
 	opArr := OutPointToBytes(self.Outpoint)
 	msg = append(msg, opArr[:]...)
 	msg = append(msg, self.Signature[:]...)
@@ -714,8 +732,8 @@ func (self SigRevMsg) Bytes() []byte {
 	return msg
 }
 
-func (self SigRevMsg) Peer() uint32   { return self.PeerIdx }
-func (self SigRevMsg) MsgType() uint8 { return MSGID_SIGREV }
+func (self SigRevMsg) Peer() uint32    { return self.PeerIdx }
+func (self SigRevMsg) MsgType() uint16 { return MSGID_SIGREV }
 
 //message for signaling state has moved, revoking old state
 type GapSigRevMsg struct {
@@ -744,11 +762,11 @@ func NewGapSigRevFromBytes(b []byte, peerId uint32) (GapSigRevMsg, error) {
 	gs := new(GapSigRevMsg)
 	gs.PeerIdx = peerId
 
-	if len(b) < 166 {
-		return *gs, fmt.Errorf("got %d byte GAPSIGREV, expect 166", len(b))
+	if len(b) < 167 {
+		return *gs, fmt.Errorf("got %d byte GAPSIGREV, expect 167", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 
 	var op [36]byte
 	copy(op[:], buf.Next(36))
@@ -771,7 +789,9 @@ func NewGapSigRevFromBytes(b []byte, peerId uint32) (GapSigRevMsg, error) {
 
 func (self GapSigRevMsg) Bytes() []byte {
 	var msg []byte
-	msg = append(msg, self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	msg = append(msg, msgType[:]...)
 	opArr := OutPointToBytes(self.Outpoint)
 	msg = append(msg, opArr[:]...)
 	msg = append(msg, self.Signature[:]...)
@@ -784,8 +804,8 @@ func (self GapSigRevMsg) Bytes() []byte {
 	return msg
 }
 
-func (self GapSigRevMsg) Peer() uint32   { return self.PeerIdx }
-func (self GapSigRevMsg) MsgType() uint8 { return MSGID_GAPSIGREV }
+func (self GapSigRevMsg) Peer() uint32    { return self.PeerIdx }
+func (self GapSigRevMsg) MsgType() uint16 { return MSGID_GAPSIGREV }
 
 //send message across channel using Elk info
 type RevMsg struct {
@@ -810,11 +830,11 @@ func NewRevMsgFromBytes(b []byte, peerId uint32) (RevMsg, error) {
 	rv := new(RevMsg)
 	rv.PeerIdx = peerId
 
-	if len(b) < 102 {
-		return *rv, fmt.Errorf("got %d byte REV, expect 102", len(b))
+	if len(b) < 103 {
+		return *rv, fmt.Errorf("got %d byte REV, expect 103", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 
 	var op [36]byte
 	copy(op[:], buf.Next(36))
@@ -828,7 +848,9 @@ func NewRevMsgFromBytes(b []byte, peerId uint32) (RevMsg, error) {
 
 func (self RevMsg) Bytes() []byte {
 	var msg []byte
-	msg = append(msg, self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	msg = append(msg, msgType[:]...)
 	opArr := OutPointToBytes(self.Outpoint)
 	msg = append(msg, opArr[:]...)
 	msg = append(msg, self.Elk[:]...)
@@ -837,8 +859,8 @@ func (self RevMsg) Bytes() []byte {
 	return msg
 }
 
-func (self RevMsg) Peer() uint32   { return self.PeerIdx }
-func (self RevMsg) MsgType() uint8 { return MSGID_REV }
+func (self RevMsg) Peer() uint32    { return self.PeerIdx }
+func (self RevMsg) MsgType() uint16 { return MSGID_REV }
 
 //----------
 
@@ -875,11 +897,11 @@ func NewHashSigMsgFromBytes(b []byte, peerid uint32) (HashSigMsg, error) {
 	ds := new(HashSigMsg)
 	ds.PeerIdx = peerid
 
-	if len(b) < 169 {
-		return *ds, fmt.Errorf("got %d byte HashSig, expect at least 169 bytes", len(b))
+	if len(b) < 170 {
+		return *ds, fmt.Errorf("got %d byte HashSig, expect at least 170 bytes", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 
 	var op [36]byte
 	copy(op[:], buf.Next(36))
@@ -907,7 +929,9 @@ func NewHashSigMsgFromBytes(b []byte, peerid uint32) (HashSigMsg, error) {
 
 func (self HashSigMsg) Bytes() []byte {
 	var msg []byte
-	msg = append(msg, self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	msg = append(msg, msgType[:]...)
 	opArr := OutPointToBytes(self.Outpoint)
 	msg = append(msg, opArr[:]...)
 	msg = append(msg, I64tB(self.Amt)...)
@@ -921,8 +945,8 @@ func (self HashSigMsg) Bytes() []byte {
 	return msg
 }
 
-func (self HashSigMsg) Peer() uint32   { return self.PeerIdx }
-func (self HashSigMsg) MsgType() uint8 { return MSGID_HASHSIG }
+func (self HashSigMsg) Peer() uint32    { return self.PeerIdx }
+func (self HashSigMsg) MsgType() uint16 { return MSGID_HASHSIG }
 
 //----------
 
@@ -957,11 +981,11 @@ func NewPreimageSigMsgFromBytes(b []byte, peerid uint32) (PreimageSigMsg, error)
 	ps := new(PreimageSigMsg)
 	ps.PeerIdx = peerid
 
-	if len(b) < 152 {
-		return *ps, fmt.Errorf("got %d byte PreimageSig, expect at least 152 bytes", len(b))
+	if len(b) < 153 {
+		return *ps, fmt.Errorf("got %d byte PreimageSig, expect at least 153 bytes", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 
 	var op [36]byte
 	copy(op[:], buf.Next(36))
@@ -988,7 +1012,9 @@ func NewPreimageSigMsgFromBytes(b []byte, peerid uint32) (PreimageSigMsg, error)
 
 func (self PreimageSigMsg) Bytes() []byte {
 	var msg []byte
-	msg = append(msg, self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	msg = append(msg, msgType[:]...)
 	opArr := OutPointToBytes(self.Outpoint)
 	msg = append(msg, opArr[:]...)
 	msg = append(msg, U32tB(self.Idx)...)
@@ -1001,8 +1027,8 @@ func (self PreimageSigMsg) Bytes() []byte {
 	return msg
 }
 
-func (self PreimageSigMsg) Peer() uint32   { return self.PeerIdx }
-func (self PreimageSigMsg) MsgType() uint8 { return MSGID_PREIMAGESIG }
+func (self PreimageSigMsg) Peer() uint32    { return self.PeerIdx }
+func (self PreimageSigMsg) MsgType() uint16 { return MSGID_PREIMAGESIG }
 
 //----------
 
@@ -1051,11 +1077,11 @@ func NewWatchDescMsgFromBytes(b []byte, peerIDX uint32) (WatchDescMsg, error) {
 	sd := new(WatchDescMsg)
 	sd.PeerIdx = peerIDX
 
-	if len(b) < 97 {
-		return *sd, fmt.Errorf("WatchannelDescriptor %d bytes, expect 97", len(b))
+	if len(b) < 98 {
+		return *sd, fmt.Errorf("WatchannelDescriptor %d bytes, expect 98", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 
 	_ = binary.Read(buf, binary.BigEndian, &sd.CoinType)
 
@@ -1073,7 +1099,9 @@ func NewWatchDescMsgFromBytes(b []byte, peerIDX uint32) (WatchDescMsg, error) {
 // Bytes turns a WatchannelDescriptor into 100 bytes
 func (self WatchDescMsg) Bytes() []byte {
 	var buf bytes.Buffer
-	buf.WriteByte(self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	buf.Write(msgType[:])
 	binary.Write(&buf, binary.BigEndian, self.CoinType)
 	buf.Write(self.DestPKHScript[:])
 	binary.Write(&buf, binary.BigEndian, self.Delay)
@@ -1083,8 +1111,8 @@ func (self WatchDescMsg) Bytes() []byte {
 	return buf.Bytes()
 }
 
-func (self WatchDescMsg) Peer() uint32   { return self.PeerIdx }
-func (self WatchDescMsg) MsgType() uint8 { return MSGID_WATCH_DESC }
+func (self WatchDescMsg) Peer() uint32    { return self.PeerIdx }
+func (self WatchDescMsg) MsgType() uint16 { return MSGID_WATCH_DESC }
 
 // the message describing the next commitment tx, sent from the client to the watchtower
 
@@ -1122,11 +1150,11 @@ func NewWatchStateMsgFromBytes(b []byte, peerIDX uint32) (WatchStateMsg, error) 
 	sm := new(WatchStateMsg)
 	sm.PeerIdx = peerIDX
 
-	if len(b) < 137 {
-		return *sm, fmt.Errorf("WatchComMsg %d bytes, expect 137", len(b))
+	if len(b) < 138 {
+		return *sm, fmt.Errorf("WatchComMsg %d bytes, expect 138", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 	_ = binary.Read(buf, binary.BigEndian, &sm.CoinType)
 	copy(sm.DestPKH[:], buf.Next(20))
 	copy(sm.ParTxid[:], buf.Next(16))
@@ -1139,7 +1167,9 @@ func NewWatchStateMsgFromBytes(b []byte, peerIDX uint32) (WatchStateMsg, error) 
 // ToBytes turns a ComMsg into 132 bytes
 func (self WatchStateMsg) Bytes() []byte {
 	var buf bytes.Buffer
-	buf.WriteByte(self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	buf.Write(msgType[:])
 	binary.Write(&buf, binary.BigEndian, self.CoinType)
 	buf.Write(self.DestPKH[:])
 	buf.Write(self.ParTxid[:])
@@ -1148,8 +1178,8 @@ func (self WatchStateMsg) Bytes() []byte {
 	return buf.Bytes()
 }
 
-func (self WatchStateMsg) Peer() uint32   { return self.PeerIdx }
-func (self WatchStateMsg) MsgType() uint8 { return MSGID_WATCH_STATEMSG }
+func (self WatchStateMsg) Peer() uint32    { return self.PeerIdx }
+func (self WatchStateMsg) MsgType() uint16 { return MSGID_WATCH_STATEMSG }
 
 //----------
 
@@ -1163,7 +1193,9 @@ type WatchDelMsg struct {
 // Bytes turns a ComMsg into 132 bytes
 func (self WatchDelMsg) Bytes() []byte {
 	var buf bytes.Buffer
-	buf.WriteByte(self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	buf.Write(msgType[:])
 	buf.Write(self.DestPKH[:])
 	buf.Write(self.RevealPK[:])
 	return buf.Bytes()
@@ -1175,19 +1207,19 @@ func NewWatchDelMsgFromBytes(b []byte, peerIDX uint32) (WatchDelMsg, error) {
 	sm := new(WatchDelMsg)
 	sm.PeerIdx = peerIDX
 
-	if len(b) < 54 {
-		return *sm, fmt.Errorf("WatchDelMsg %d bytes, expect 54", len(b))
+	if len(b) < 55 {
+		return *sm, fmt.Errorf("WatchDelMsg %d bytes, expect 55", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 
 	copy(sm.DestPKH[:], buf.Next(20))
 	copy(sm.RevealPK[:], buf.Next(33))
 
 	return *sm, nil
 }
-func (self WatchDelMsg) Peer() uint32   { return self.PeerIdx }
-func (self WatchDelMsg) MsgType() uint8 { return MSGID_WATCH_DELETE }
+func (self WatchDelMsg) Peer() uint32    { return self.PeerIdx }
+func (self WatchDelMsg) MsgType() uint16 { return MSGID_WATCH_DELETE }
 
 // Link message
 
@@ -1249,11 +1281,11 @@ func NewLinkMsgFromBytes(b []byte, peerIDX uint32) (LinkMsg, error) {
 	sm := new(LinkMsg)
 	sm.PeerIdx = peerIDX
 
-	if len(b) < 61 {
-		return *sm, fmt.Errorf("LinkMsg %d bytes, expect at least 61", len(b))
+	if len(b) < 62 {
+		return *sm, fmt.Errorf("LinkMsg %d bytes, expect at least 62", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 
 	copy(sm.APKH[:], buf.Next(20))
 	err := binary.Read(buf, binary.BigEndian, &sm.ACapacity)
@@ -1292,7 +1324,9 @@ func NewLinkMsgFromBytes(b []byte, peerIDX uint32) (LinkMsg, error) {
 func (self LinkMsg) Bytes() []byte {
 	var buf bytes.Buffer
 
-	buf.WriteByte(self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	buf.Write(msgType[:])
 
 	buf.Write(self.APKH[:])
 	binary.Write(&buf, binary.BigEndian, self.ACapacity)
@@ -1312,8 +1346,8 @@ func (self LinkMsg) Bytes() []byte {
 	return buf.Bytes()
 }
 
-func (self LinkMsg) Peer() uint32   { return self.PeerIdx }
-func (self LinkMsg) MsgType() uint8 { return MSGID_LINK_DESC }
+func (self LinkMsg) Peer() uint32    { return self.PeerIdx }
+func (self LinkMsg) MsgType() uint16 { return MSGID_LINK_DESC }
 
 // Dual funding messages
 
@@ -1353,11 +1387,11 @@ func NewDualFundingReqMsgFromBytes(b []byte, peerIdx uint32) (DualFundingReqMsg,
 	msg := new(DualFundingReqMsg)
 	msg.PeerIdx = peerIdx
 
-	if len(b) < 144 {
-		return *msg, fmt.Errorf("DualFundingReqMsg %d bytes, expect at least 144", len(b))
+	if len(b) < 145 {
+		return *msg, fmt.Errorf("DualFundingReqMsg %d bytes, expect at least 145", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 	_ = binary.Read(buf, binary.BigEndian, &msg.CoinType)
 	_ = binary.Read(buf, binary.BigEndian, &msg.OurAmount)
 	_ = binary.Read(buf, binary.BigEndian, &msg.TheirAmount)
@@ -1389,7 +1423,9 @@ func NewDualFundingReqMsgFromBytes(b []byte, peerIdx uint32) (DualFundingReqMsg,
 func (self DualFundingReqMsg) Bytes() []byte {
 	var buf bytes.Buffer
 
-	buf.WriteByte(self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	buf.Write(msgType[:])
 
 	binary.Write(&buf, binary.BigEndian, self.CoinType)
 	binary.Write(&buf, binary.BigEndian, self.OurAmount)
@@ -1410,8 +1446,8 @@ func (self DualFundingReqMsg) Bytes() []byte {
 	return buf.Bytes()
 }
 
-func (self DualFundingReqMsg) Peer() uint32   { return self.PeerIdx }
-func (self DualFundingReqMsg) MsgType() uint8 { return MSGID_DUALFUNDINGREQ }
+func (self DualFundingReqMsg) Peer() uint32    { return self.PeerIdx }
+func (self DualFundingReqMsg) MsgType() uint16 { return MSGID_DUALFUNDINGREQ }
 
 type DualFundingDeclMsg struct {
 	PeerIdx uint32
@@ -1429,11 +1465,11 @@ func NewDualFundingDeclMsgFromBytes(b []byte, peerIdx uint32) (DualFundingDeclMs
 	msg := new(DualFundingDeclMsg)
 	msg.PeerIdx = peerIdx
 
-	if len(b) < 2 {
-		return *msg, fmt.Errorf("DualFundingDeclMsg %d bytes, expect at least 2", len(b))
+	if len(b) < 3 {
+		return *msg, fmt.Errorf("DualFundingDeclMsg %d bytes, expect at least 3", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 
 	_ = binary.Read(buf, binary.BigEndian, &msg.Reason)
 	return *msg, nil
@@ -1443,14 +1479,16 @@ func NewDualFundingDeclMsgFromBytes(b []byte, peerIdx uint32) (DualFundingDeclMs
 func (self DualFundingDeclMsg) Bytes() []byte {
 	var buf bytes.Buffer
 
-	buf.WriteByte(self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	buf.Write(msgType[:])
 
 	binary.Write(&buf, binary.BigEndian, self.Reason)
 	return buf.Bytes()
 }
 
-func (self DualFundingDeclMsg) Peer() uint32   { return self.PeerIdx }
-func (self DualFundingDeclMsg) MsgType() uint8 { return MSGID_DUALFUNDINGDECL }
+func (self DualFundingDeclMsg) Peer() uint32    { return self.PeerIdx }
+func (self DualFundingDeclMsg) MsgType() uint16 { return MSGID_DUALFUNDINGDECL }
 
 type DualFundingAcceptMsg struct {
 	PeerIdx             uint32
@@ -1482,11 +1520,11 @@ func NewDualFundingAcceptMsgFromBytes(b []byte, peerIdx uint32) (DualFundingAcce
 	msg := new(DualFundingAcceptMsg)
 	msg.PeerIdx = peerIdx
 
-	if len(b) < 29 {
-		return *msg, fmt.Errorf("DualFundingAcceptMsg %d bytes, expect at least 29", len(b))
+	if len(b) < 30 {
+		return *msg, fmt.Errorf("DualFundingAcceptMsg %d bytes, expect at least 30", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 
 	_ = binary.Read(buf, binary.BigEndian, &msg.CoinType)
 	copy(msg.OurPub[:], buf.Next(33))
@@ -1518,7 +1556,9 @@ func NewDualFundingAcceptMsgFromBytes(b []byte, peerIdx uint32) (DualFundingAcce
 func (self DualFundingAcceptMsg) Bytes() []byte {
 	var buf bytes.Buffer
 
-	buf.WriteByte(self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	buf.Write(msgType[:])
 	binary.Write(&buf, binary.BigEndian, self.CoinType)
 	buf.Write(self.OurPub[:])
 	buf.Write(self.OurRefundPub[:])
@@ -1538,8 +1578,8 @@ func (self DualFundingAcceptMsg) Bytes() []byte {
 	return buf.Bytes()
 }
 
-func (self DualFundingAcceptMsg) Peer() uint32   { return self.PeerIdx }
-func (self DualFundingAcceptMsg) MsgType() uint8 { return MSGID_DUALFUNDINGACCEPT }
+func (self DualFundingAcceptMsg) Peer() uint32    { return self.PeerIdx }
+func (self DualFundingAcceptMsg) MsgType() uint16 { return MSGID_DUALFUNDINGACCEPT }
 
 //message for channel acknowledgement and funding signatures
 type DualFundingChanAckMsg struct {
@@ -1568,11 +1608,11 @@ func NewDualFundingChanAckMsgFromBytes(b []byte, peerid uint32) (DualFundingChan
 	cm := new(DualFundingChanAckMsg)
 	cm.PeerIdx = peerid
 
-	if len(b) < 208 {
-		return *cm, fmt.Errorf("got %d byte DualFundingChanAck, expect 212 or more", len(b))
+	if len(b) < 209 {
+		return *cm, fmt.Errorf("got %d byte DualFundingChanAck, expect 209 or more", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 
 	var op [36]byte
 	copy(op[:], buf.Next(36))
@@ -1600,7 +1640,9 @@ func (self DualFundingChanAckMsg) Bytes() []byte {
 	var buf bytes.Buffer
 
 	opArr := OutPointToBytes(self.Outpoint)
-	buf.WriteByte(self.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], self.MsgType())
+	buf.Write(msgType[:])
 	buf.Write(opArr[:])
 	buf.Write(self.ElkZero[:])
 	buf.Write(self.ElkOne[:])
@@ -1615,8 +1657,8 @@ func (self DualFundingChanAckMsg) Bytes() []byte {
 	return buf.Bytes()
 }
 
-func (self DualFundingChanAckMsg) Peer() uint32   { return self.PeerIdx }
-func (self DualFundingChanAckMsg) MsgType() uint8 { return MSGID_DUALFUNDINGCHANACK }
+func (self DualFundingChanAckMsg) Peer() uint32    { return self.PeerIdx }
+func (self DualFundingChanAckMsg) MsgType() uint16 { return MSGID_DUALFUNDINGCHANACK }
 
 // DlcOfferMsg is the message we send to a peer to offer that peer a
 // particular contract
@@ -1649,7 +1691,9 @@ func NewDlcOfferMsgFromBytes(b []byte, peerIDX uint32) (DlcOfferMsg, error) {
 func (msg DlcOfferMsg) Bytes() []byte {
 	var buf bytes.Buffer
 
-	buf.WriteByte(msg.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], msg.MsgType())
+	buf.Write(msgType[:])
 	buf.Write(msg.Contract.Bytes())
 
 	return buf.Bytes()
@@ -1659,7 +1703,7 @@ func (msg DlcOfferMsg) Bytes() []byte {
 func (msg DlcOfferMsg) Peer() uint32 { return msg.PeerIdx }
 
 // MsgType returns the type of this message
-func (msg DlcOfferMsg) MsgType() uint8 { return MSGID_DLC_OFFER }
+func (msg DlcOfferMsg) MsgType() uint16 { return MSGID_DLC_OFFER }
 
 type DlcOfferDeclineMsg struct {
 	PeerIdx uint32
@@ -1687,12 +1731,12 @@ func NewDlcOfferDeclineMsgFromBytes(b []byte,
 	msg := new(DlcOfferDeclineMsg)
 	msg.PeerIdx = peerIdx
 
-	if len(b) < 2 {
+	if len(b) < 3 {
 		return *msg, fmt.Errorf("DlcOfferDeclineMsg %d bytes, expect at"+
-			" least 2", len(b))
+			" least 3", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 	_ = binary.Read(buf, binary.BigEndian, &msg.Reason)
 	msg.Idx, _ = wire.ReadVarInt(buf, 0)
 
@@ -1703,7 +1747,9 @@ func NewDlcOfferDeclineMsgFromBytes(b []byte,
 func (msg DlcOfferDeclineMsg) Bytes() []byte {
 	var buf bytes.Buffer
 
-	buf.WriteByte(msg.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], msg.MsgType())
+	buf.Write(msgType[:])
 
 	binary.Write(&buf, binary.BigEndian, msg.Reason)
 	wire.WriteVarInt(&buf, 0, msg.Idx)
@@ -1714,7 +1760,7 @@ func (msg DlcOfferDeclineMsg) Bytes() []byte {
 func (msg DlcOfferDeclineMsg) Peer() uint32 { return msg.PeerIdx }
 
 // MsgType returns the type of this message
-func (msg DlcOfferDeclineMsg) MsgType() uint8 { return MSGID_DLC_DECLINEOFFER }
+func (msg DlcOfferDeclineMsg) MsgType() uint16 { return MSGID_DLC_DECLINEOFFER }
 
 // DlcContractSettlementSignature contains the signature for a particular
 // settlement transaction
@@ -1773,12 +1819,12 @@ func NewDlcOfferAcceptMsgFromBytes(b []byte,
 	msg := new(DlcOfferAcceptMsg)
 	msg.PeerIdx = peerIdx
 
-	if len(b) < 34 {
+	if len(b) < 35 {
 		return *msg, fmt.Errorf("DlcOfferAcceptMsg %d bytes, expect at"+
-			" least 34", len(b))
+			" least 35", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 	msg.Idx, _ = wire.ReadVarInt(buf, 0)
 	msg.OurIdx, _ = wire.ReadVarInt(buf, 0)
 
@@ -1815,7 +1861,9 @@ func NewDlcOfferAcceptMsgFromBytes(b []byte,
 func (msg DlcOfferAcceptMsg) Bytes() []byte {
 	var buf bytes.Buffer
 
-	buf.WriteByte(msg.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], msg.MsgType())
+	buf.Write(msgType[:])
 
 	wire.WriteVarInt(&buf, 0, msg.Idx)
 	wire.WriteVarInt(&buf, 0, msg.OurIdx)
@@ -1850,7 +1898,7 @@ func (msg DlcOfferAcceptMsg) Peer() uint32 {
 }
 
 // MsgType returns the type of this message
-func (msg DlcOfferAcceptMsg) MsgType() uint8 {
+func (msg DlcOfferAcceptMsg) MsgType() uint16 {
 	return MSGID_DLC_ACCEPTOFFER
 }
 
@@ -1887,12 +1935,12 @@ func NewDlcContractAckMsgFromBytes(b []byte,
 	msg.PeerIdx = peerIdx
 
 	// TODO
-	if len(b) < 34 {
+	if len(b) < 35 {
 		return *msg, fmt.Errorf("DlcContractAckMsg %d bytes, expect at"+
-			" least 34", len(b))
+			" least 35", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 	msg.Idx, _ = wire.ReadVarInt(buf, 0)
 
 	var sigCount uint32
@@ -1910,7 +1958,9 @@ func NewDlcContractAckMsgFromBytes(b []byte,
 func (msg DlcContractAckMsg) Bytes() []byte {
 	var buf bytes.Buffer
 
-	buf.WriteByte(msg.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], msg.MsgType())
+	buf.Write(msgType[:])
 	wire.WriteVarInt(&buf, 0, msg.Idx)
 
 	signatureCount := uint32(len(msg.SettlementSignatures))
@@ -1930,7 +1980,7 @@ func (msg DlcContractAckMsg) Peer() uint32 {
 }
 
 // MsgType returns the type of this message
-func (msg DlcContractAckMsg) MsgType() uint8 {
+func (msg DlcContractAckMsg) MsgType() uint16 {
 	return MSGID_DLC_CONTRACTACK
 }
 
@@ -1965,12 +2015,12 @@ func NewDlcContractFundingSigsMsgFromBytes(b []byte,
 	msg.PeerIdx = peerIdx
 
 	// TODO
-	if len(b) < 34 {
+	if len(b) < 35 {
 		return *msg, fmt.Errorf("DlcContractFundingSigsMsg %d bytes, expect"+
-			"at least 34", len(b))
+			"at least 35", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 	msg.Idx, _ = wire.ReadVarInt(buf, 0)
 
 	msg.SignedFundingTx = wire.NewMsgTx()
@@ -1983,7 +2033,9 @@ func NewDlcContractFundingSigsMsgFromBytes(b []byte,
 func (msg DlcContractFundingSigsMsg) Bytes() []byte {
 	var buf bytes.Buffer
 
-	buf.WriteByte(msg.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], msg.MsgType())
+	buf.Write(msgType[:])
 	wire.WriteVarInt(&buf, 0, msg.Idx)
 
 	writer := bufio.NewWriter(&buf)
@@ -1998,7 +2050,7 @@ func (msg DlcContractFundingSigsMsg) Peer() uint32 {
 }
 
 // MsgType returns the type of this message
-func (msg DlcContractFundingSigsMsg) MsgType() uint8 {
+func (msg DlcContractFundingSigsMsg) MsgType() uint16 {
 	return MSGID_DLC_CONTRACTFUNDINGSIGS
 }
 
@@ -2035,12 +2087,12 @@ func NewDlcContractSigProofMsgFromBytes(b []byte,
 	msg.PeerIdx = peerIdx
 
 	// TODO
-	if len(b) < 34 {
+	if len(b) < 35 {
 		return *msg, fmt.Errorf("DlcContractSigProofMsg %d bytes, expect"+
-			" at least 34", len(b))
+			" at least 35", len(b))
 	}
 
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 	msg.Idx, _ = wire.ReadVarInt(buf, 0)
 
 	msg.SignedFundingTx = wire.NewMsgTx()
@@ -2053,7 +2105,9 @@ func NewDlcContractSigProofMsgFromBytes(b []byte,
 func (msg DlcContractSigProofMsg) Bytes() []byte {
 	var buf bytes.Buffer
 
-	buf.WriteByte(msg.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], msg.MsgType())
+	buf.Write(msgType[:])
 	wire.WriteVarInt(&buf, 0, msg.Idx)
 
 	writer := bufio.NewWriter(&buf)
@@ -2068,7 +2122,7 @@ func (msg DlcContractSigProofMsg) Peer() uint32 {
 }
 
 // MsgType returns the type of this message
-func (msg DlcContractSigProofMsg) MsgType() uint8 {
+func (msg DlcContractSigProofMsg) MsgType() uint16 {
 	return MSGID_DLC_SIGPROOF
 }
 
@@ -2108,7 +2162,9 @@ func NewMultihopPaymentRequestMsgFromBytes(b []byte,
 func (msg MultihopPaymentRequestMsg) Bytes() []byte {
 	var buf bytes.Buffer
 
-	buf.WriteByte(msg.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], msg.MsgType())
+	buf.Write(msgType[:])
 	binary.Write(&buf, binary.BigEndian, msg.Cointype)
 	return buf.Bytes()
 }
@@ -2119,7 +2175,7 @@ func (msg MultihopPaymentRequestMsg) Peer() uint32 {
 }
 
 // MsgType returns the type of this message
-func (msg MultihopPaymentRequestMsg) MsgType() uint8 {
+func (msg MultihopPaymentRequestMsg) MsgType() uint16 {
 	return MSGID_PAY_REQ
 }
 
@@ -2144,7 +2200,7 @@ func NewMultihopPaymentAckMsgFromBytes(b []byte,
 
 	msg := new(MultihopPaymentAckMsg)
 	msg.PeerIdx = peerIdx
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 	copy(msg.HHash[:], buf.Next(32))
 	return *msg, nil
 }
@@ -2153,7 +2209,9 @@ func NewMultihopPaymentAckMsgFromBytes(b []byte,
 func (msg MultihopPaymentAckMsg) Bytes() []byte {
 	var buf bytes.Buffer
 
-	buf.WriteByte(msg.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], msg.MsgType())
+	buf.Write(msgType[:])
 	buf.Write(msg.HHash[:])
 
 	return buf.Bytes()
@@ -2164,7 +2222,7 @@ func (msg MultihopPaymentAckMsg) Peer() uint32 {
 }
 
 // MsgType returns the type of this message
-func (msg MultihopPaymentAckMsg) MsgType() uint8 {
+func (msg MultihopPaymentAckMsg) MsgType() uint16 {
 	return MSGID_PAY_ACK
 }
 
@@ -2225,7 +2283,9 @@ func NewRemoteControlRpcRequestMsgFromBytes(b []byte,
 func (msg RemoteControlRpcRequestMsg) Bytes() []byte {
 	var buf bytes.Buffer
 
-	buf.WriteByte(msg.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], msg.MsgType())
+	buf.Write(msgType[:])
 	buf.Write(msg.PubKey[:])
 	buf.Write(msg.Sig[:])
 	binary.Write(&buf, binary.BigEndian, msg.DigestType)
@@ -2246,7 +2306,7 @@ func (msg RemoteControlRpcRequestMsg) Peer() uint32 {
 	return msg.PeerIdx
 }
 
-func (msg RemoteControlRpcRequestMsg) MsgType() uint8 {
+func (msg RemoteControlRpcRequestMsg) MsgType() uint16 {
 	return MSGID_REMOTE_RPCREQUEST
 }
 
@@ -2312,7 +2372,7 @@ func NewMultihopPaymentSetupMsgFromBytes(b []byte,
 
 	msg := new(MultihopPaymentSetupMsg)
 	msg.PeerIdx = peerIdx
-	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
+	buf := bytes.NewBuffer(b[2:]) // get rid of messageType
 	copy(msg.HHash[:], buf.Next(32))
 
 	hops, _ := wire.ReadVarInt(buf, 0)
@@ -2334,7 +2394,9 @@ func NewMultihopPaymentSetupMsgFromBytes(b []byte,
 func (msg MultihopPaymentSetupMsg) Bytes() []byte {
 	var buf bytes.Buffer
 
-	buf.WriteByte(msg.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], msg.MsgType())
+	buf.Write(msgType[:])
 	buf.Write(msg.HHash[:])
 	wire.WriteVarInt(&buf, 0, uint64(len(msg.NodeRoute)))
 	for _, nd := range msg.NodeRoute {
@@ -2351,7 +2413,7 @@ func (msg MultihopPaymentSetupMsg) Peer() uint32 {
 }
 
 // MsgType returns the type of this message
-func (msg MultihopPaymentSetupMsg) MsgType() uint8 {
+func (msg MultihopPaymentSetupMsg) MsgType() uint16 {
 	return MSGID_PAY_SETUP
 }
 
@@ -2394,7 +2456,9 @@ func NewRemoteControlRpcResponseMsgFromBytes(b []byte,
 func (msg RemoteControlRpcResponseMsg) Bytes() []byte {
 	var buf bytes.Buffer
 
-	buf.WriteByte(msg.MsgType())
+	var msgType [2]byte
+	binary.BigEndian.PutUint16(msgType[:], msg.MsgType())
+	buf.Write(msgType[:])
 	binary.Write(&buf, binary.BigEndian, msg.Idx)
 	binary.Write(&buf, binary.BigEndian, msg.Error)
 
@@ -2409,6 +2473,6 @@ func (msg RemoteControlRpcResponseMsg) Peer() uint32 {
 }
 
 // MsgType returns the type of this message
-func (msg RemoteControlRpcResponseMsg) MsgType() uint8 {
+func (msg RemoteControlRpcResponseMsg) MsgType() uint16 {
 	return MSGID_REMOTE_RPCRESPONSE
 }

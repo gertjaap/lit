@@ -15,7 +15,7 @@ func processMessage(b []byte, peer *Peer) (lnutil.LitMsg, error) {
 
 // Message is any kind of message that can go over the network.
 type Message interface {
-	Type() uint8
+	Type() uint16
 	Bytes() []byte
 }
 

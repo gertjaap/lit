@@ -34,7 +34,7 @@ func TestChatMsg(t *testing.T) {
 		t.Fatalf("interface mismatch:\n%x\n%x\n", msg2.Bytes(), msg3.Bytes())
 	}
 
-	_, err = LitMsgFromBytes(b[:1], peerid) //purposely error to check working
+	_, err = LitMsgFromBytes(b[:2], peerid) //purposely error to check working
 
 	if err == nil {
 		t.Fatalf("Should have errored Chat Msg, but didn't")

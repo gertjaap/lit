@@ -1,6 +1,7 @@
 package litrpc
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -221,8 +222,11 @@ func (cli *LndcRpcClient) ReceiveLoop() {
 			return
 		}
 		msg = msg[:n]
+
+		mtype := binary.BigEndian.Uint16(msg[0:1])
+
 		// We only care about RPC responses (for now)
-		if msg[0] == lnutil.MSGID_REMOTE_RPCRESPONSE {
+		if mtype == lnutil.MSGID_REMOTE_RPCRESPONSE {
 			// Parse the received message
 			response, err := lnutil.NewRemoteControlRpcResponseMsgFromBytes(msg, 0)
 			if err != nil {

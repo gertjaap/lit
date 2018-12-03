@@ -1,20 +1,22 @@
 package qln
 
 import (
+	"encoding/binary"
+	"sync"
+
 	"github.com/mit-dci/lit/lnp2p"
 	"github.com/mit-dci/lit/lnutil"
 	"github.com/mit-dci/lit/logging"
-	"sync"
 )
 
 // LitMsgWrapperMessage is a wrapper type for adapting things to other things.
 type LitMsgWrapperMessage struct {
-	mtype  uint8
+	mtype  uint16
 	rawbuf []byte
 }
 
 // Type .
-func (wm LitMsgWrapperMessage) Type() uint8 {
+func (wm LitMsgWrapperMessage) Type() uint16 {
 	return wm.mtype
 }
 
@@ -23,11 +25,11 @@ func (wm LitMsgWrapperMessage) Bytes() []byte {
 	return wm.rawbuf
 }
 
-func makeNeoOmniParser(mtype uint8) lnp2p.ParseFuncType {
+func makeNeoOmniParser(mtype uint16) lnp2p.ParseFuncType {
 	return func(buf []byte) (lnp2p.Message, error) {
-		fullbuf := make([]byte, len(buf)+1)
-		fullbuf[0] = mtype
-		copy(fullbuf[1:], buf)
+		fullbuf := make([]byte, len(buf)+2)
+		binary.BigEndian.PutUint16(fullbuf[:], mtype)
+		copy(fullbuf[2:], buf)
 		return LitMsgWrapperMessage{mtype, fullbuf}, nil
 	}
 }
@@ -72,13 +74,13 @@ func makeNeoOmniHandler(nd *LitNode) lnp2p.HandleFuncType {
 		// TODO Fix this.  Also it's quite inefficient the way it's written at the moment.
 		var chanIdx uint32
 		chanIdx = 0
-		if len(rawbuf) > 38 {
+		if len(rawbuf) > 39 {
 			var opArr [36]byte
 			for _, q := range peer.QCs {
 				b := lnutil.OutPointToBytes(q.Op)
 				peer.OpMap[b] = q.Idx()
 			}
-			copy(opArr[:], rawbuf[1:37]) // yay for magic numbers /s
+			copy(opArr[:], rawbuf[2:38]) // yay for magic numbers /s
 			chanCheck, ok := peer.OpMap[opArr]
 			if ok {
 				chanIdx = chanCheck
