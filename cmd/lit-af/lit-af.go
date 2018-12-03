@@ -159,7 +159,7 @@ func (lc *litAfClient) litAfSetup(conf litAfConfig) error {
 
 		// initialize a new rpc instance with noise_xk based authentication here
 		adr = fmt.Sprintf("%s@%s:%d", adr, host, port)
-		err = litrpc.NewOtherRpcClient(adr, key)
+		lc.RPCClient, err = litrpc.NewLndcRpcClient(adr, key)
 		if err != nil {
 			logging.Fatal(err.Error())
 		}
