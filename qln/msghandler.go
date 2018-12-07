@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/mit-dci/lit/lnwire"
 	"github.com/mit-dci/lit/logging"
 
 	"github.com/mit-dci/lit/btcutil/txscript"
@@ -16,6 +17,7 @@ func (nd *LitNode) registerHandlers() {
 
 	mp := nd.PeerMan.GetMessageProcessor()
 	hf := makeNeoOmniHandler(nd)
+	bhf := makeNeoBoltHandler(nd)
 
 	// I used the following command to generate these calls below:
 	// grep -E '^.MSGID_[A-Z_]+ += ' lnutil/msglib.go | awk '{ print $1 }' | while read m; do echo "mp.DefineMessage(lnutil.$m, makeNeoOmniParser(lnutil.$m), hf)" ; done
@@ -57,11 +59,46 @@ func (nd *LitNode) registerHandlers() {
 	mp.DefineMessage(lnutil.MSGID_PAY_ACK, makeNeoOmniParser(lnutil.MSGID_PAY_ACK), hf)
 	mp.DefineMessage(lnutil.MSGID_PAY_SETUP, makeNeoOmniParser(lnutil.MSGID_PAY_SETUP), hf)
 
+	mp.DefineMessage(uint16(lnwire.MsgInit), makeNeoOmniParser(uint16(lnwire.MsgInit)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgError), makeNeoOmniParser(uint16(lnwire.MsgError)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgPing), makeNeoOmniParser(uint16(lnwire.MsgPing)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgPong), makeNeoOmniParser(uint16(lnwire.MsgPong)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgOpenChannel), makeNeoOmniParser(uint16(lnwire.MsgOpenChannel)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgAcceptChannel), makeNeoOmniParser(uint16(lnwire.MsgAcceptChannel)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgFundingCreated), makeNeoOmniParser(uint16(lnwire.MsgFundingCreated)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgFundingSigned), makeNeoOmniParser(uint16(lnwire.MsgFundingSigned)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgFundingLocked), makeNeoOmniParser(uint16(lnwire.MsgFundingLocked)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgShutdown), makeNeoOmniParser(uint16(lnwire.MsgShutdown)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgClosingSigned), makeNeoOmniParser(uint16(lnwire.MsgClosingSigned)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgUpdateAddHTLC), makeNeoOmniParser(uint16(lnwire.MsgUpdateAddHTLC)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgUpdateFulfillHTLC), makeNeoOmniParser(uint16(lnwire.MsgUpdateFulfillHTLC)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgUpdateFailHTLC), makeNeoOmniParser(uint16(lnwire.MsgUpdateFailHTLC)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgCommitSig), makeNeoOmniParser(uint16(lnwire.MsgCommitSig)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgRevokeAndAck), makeNeoOmniParser(uint16(lnwire.MsgRevokeAndAck)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgUpdateFee), makeNeoOmniParser(uint16(lnwire.MsgUpdateFee)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgUpdateFailMalformedHTLC), makeNeoOmniParser(uint16(lnwire.MsgUpdateFailMalformedHTLC)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgChannelReestablish), makeNeoOmniParser(uint16(lnwire.MsgChannelReestablish)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgChannelAnnouncement), makeNeoOmniParser(uint16(lnwire.MsgChannelAnnouncement)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgNodeAnnouncement), makeNeoOmniParser(uint16(lnwire.MsgNodeAnnouncement)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgChannelUpdate), makeNeoOmniParser(uint16(lnwire.MsgChannelUpdate)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgAnnounceSignatures), makeNeoOmniParser(uint16(lnwire.MsgAnnounceSignatures)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgQueryShortChanIDs), makeNeoOmniParser(uint16(lnwire.MsgQueryShortChanIDs)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgReplyShortChanIDsEnd), makeNeoOmniParser(uint16(lnwire.MsgReplyShortChanIDsEnd)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgQueryChannelRange), makeNeoOmniParser(uint16(lnwire.MsgQueryChannelRange)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgReplyChannelRange), makeNeoOmniParser(uint16(lnwire.MsgReplyChannelRange)), bhf)
+	mp.DefineMessage(uint16(lnwire.MsgGossipTimestampRange), makeNeoOmniParser(uint16(lnwire.MsgGossipTimestampRange)), bhf)
+}
+
+// handles BOLT stuff that comes in over the wire
+func (nd *LitNode) BoltHandler(msg lnutil.BoltMsg, q *Qchan, peer *RemotePeer) error {
+	fmt.Printf("Received BOLT message type 0x%x from peer %d\n", msg.MsgType(), msg.Peer())
+	return nil
 }
 
 // handles stuff that comes in over the wire.  Not user-initiated.
 func (nd *LitNode) PeerHandler(msg lnutil.LitMsg, q *Qchan, peer *RemotePeer) error {
 	logging.Infof("Message from %d type %x", msg.Peer(), msg.MsgType())
+
 	switch msg.MsgType() & 0xfff0 {
 	case 0x1000: // TEXT MESSAGE.  SIMPLE
 		chat, ok := msg.(lnutil.ChatMsg)
