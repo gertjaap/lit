@@ -20,5 +20,6 @@ func (msg BoltMsg) Bytes() []byte {
 	var b bytes.Buffer
 	writer := bufio.NewWriter(&b)
 	_ = msg.InnerMsg.Encode(writer, 0)
+	writer.Flush()
 	return b.Bytes()
 }
