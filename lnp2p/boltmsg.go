@@ -23,3 +23,10 @@ func (msg BoltMsg) Bytes() []byte {
 	writer.Flush()
 	return b.Bytes()
 }
+
+func DecodeBoltMsg(msg lnwire.Message, b []byte) (Message, error) {
+	buf := bytes.NewBuffer(b)
+	r := bufio.NewReader(buf)
+	err := msg.Decode(r, 0)
+	return BoltMsg{InnerMsg: msg}, err
+}

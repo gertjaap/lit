@@ -59,6 +59,8 @@ func (nd *LitNode) registerHandlers() {
 	mp.DefineMessage(lnutil.MSGID_PAY_SETUP, makeNeoOmniParser(lnutil.MSGID_PAY_SETUP), hf)
 
 	lnp2p.RegisterInitHandler(mp)
+	lnp2p.RegisterPingPongHandlers(mp)
+
 	/*	mp.DefineMessage(uint16(lnwire.MsgError), makeNeoOmniParser(uint16(lnwire.MsgError)), bhf)
 		mp.DefineMessage(uint16(lnwire.MsgPing), makeNeoOmniParser(uint16(lnwire.MsgPing)), bhf)
 		mp.DefineMessage(uint16(lnwire.MsgPong), makeNeoOmniParser(uint16(lnwire.MsgPong)), bhf)

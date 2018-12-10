@@ -88,7 +88,7 @@ func (mp *MessageProcessor) HandleMessage(peer *Peer, buf []byte) error {
 	// Parse the message.
 	parsed, err := h.parseFunc(buf[2:])
 	if err != nil {
-		logging.Warnf("msgproc: Malformed message of type %x from peer %s\n", mtype, peer.GetPrettyName())
+		logging.Warnf("msgproc: Malformed message of type %x from peer %s: %s\n", mtype, peer.GetPrettyName(), err.Error())
 		return err
 	}
 

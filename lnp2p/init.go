@@ -1,8 +1,6 @@
 package lnp2p
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
 
 	"github.com/mit-dci/lit/eventbus"
@@ -15,11 +13,7 @@ func RegisterInitHandler(mp *MessageProcessor) {
 }
 
 func parseInitMsg(b []byte) (Message, error) {
-	msg := &lnwire.Init{}
-	buf := bytes.NewBuffer(b)
-	r := bufio.NewReader(buf)
-	err := msg.Decode(r, 0)
-	return BoltMsg{InnerMsg: msg}, err
+	return DecodeBoltMsg(&lnwire.Init{}, b)
 }
 
 func handleInitMsg(p *Peer, m Message) error {
@@ -33,7 +27,7 @@ func handleInitMsg(p *Peer, m Message) error {
 	return nil
 }
 
-func InitEventHandler() func(eventbus.Event) eventbus.EventHandleResult {
+func InitNewNodeEventHandler() func(eventbus.Event) eventbus.EventHandleResult {
 	return func(e eventbus.Event) eventbus.EventHandleResult {
 		ee := e.(NewPeerEvent)
 
