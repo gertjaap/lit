@@ -1,13 +1,11 @@
 package qln
 
 import (
-	"bytes"
 	"encoding/binary"
 	"sync"
 
 	"github.com/mit-dci/lit/lnp2p"
 	"github.com/mit-dci/lit/lnutil"
-	"github.com/mit-dci/lit/lnwire"
 	"github.com/mit-dci/lit/logging"
 )
 
@@ -33,30 +31,6 @@ func makeNeoOmniParser(mtype uint16) lnp2p.ParseFuncType {
 		binary.BigEndian.PutUint16(fullbuf[:], mtype)
 		copy(fullbuf[2:], buf)
 		return LitMsgWrapperMessage{mtype, fullbuf}, nil
-	}
-}
-
-func makeNeoBoltHandler(nd *LitNode) lnp2p.HandleFuncType {
-	mtx := &sync.Mutex{}
-
-	return func(p *lnp2p.Peer, m lnp2p.Message) error {
-		// Idk how much locking I need to do here, but doing it across the whole
-		// function probably wouldn't hurt.
-		mtx.Lock()
-		defer mtx.Unlock()
-
-		wm := m.(LitMsgWrapperMessage)
-		buf := bytes.NewBuffer(wm.rawbuf)
-
-		var err error
-		var litMsg lnutil.BoltMsg
-		litMsg.InnerMsg, err = lnwire.ReadMessage(buf, 0)
-		if err != nil {
-			return err
-		}
-		peer := nd.PeerMap[p]
-		litMsg.PeerIdx = peer.Idx
-		return nd.BoltHandler(litMsg, nil, peer)
 	}
 }
 

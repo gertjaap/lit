@@ -1,6 +1,7 @@
 package litrpc
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strconv"
 	"strings"
@@ -94,6 +95,14 @@ func (r *LitRPC) Connect(args ConnectArgs, reply *ConnectReply) error {
 	paddr := connectAdr
 	if strings.Contains(paddr, "@") {
 		paddr = strings.SplitN(paddr, "@", 2)[0]
+	}
+
+	// When connecting to full pubkey, convert it to ln1 address using its hash
+	if len(paddr) >= 32 {
+		var pubKeyBytes [33]byte
+		decoded, _ := hex.DecodeString(paddr)
+		copy(pubKeyBytes[:], decoded[:])
+		paddr = lnutil.LitAdrFromPubkey(pubKeyBytes)
 	}
 
 	var pm *lnp2p.PeerManager = r.Node.PeerMan

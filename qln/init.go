@@ -74,6 +74,10 @@ func NewLitNode(privKey *[32]byte, path string, trackerURL string, proxyURL stri
 	h2 := makeTmpDisconnectPeerHandler(nd)
 	nd.Events.RegisterHandler("lnp2p.peer.disconnect", h2)
 
+	// Register new init message event for BOLT connections
+	h3 := lnp2p.InitEventHandler()
+	nd.Events.RegisterHandler("lnp2p.peer.new", h3)
+
 	// Sets up handlers for all the messages we need to handle.
 	nd.registerHandlers()
 

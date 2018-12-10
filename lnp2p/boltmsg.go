@@ -1,4 +1,4 @@
-package lnutil
+package lnp2p
 
 import (
 	"bufio"
@@ -7,17 +7,12 @@ import (
 	"github.com/mit-dci/lit/lnwire"
 )
 
-// BoltMsg is a bridge between LitMsg and Bolt-compatible message from lnwire
+// BoltMsg is a bridge between lnp2p.Message and Bolt-compatible message from lnwire
 type BoltMsg struct {
 	InnerMsg lnwire.Message
-	PeerIdx  uint32
 }
 
-func (msg BoltMsg) Peer() uint32 {
-	return msg.PeerIdx
-}
-
-func (msg BoltMsg) MsgType() uint16 {
+func (msg BoltMsg) Type() uint16 {
 	return uint16(msg.InnerMsg.MsgType())
 }
 
