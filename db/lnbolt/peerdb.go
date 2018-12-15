@@ -134,10 +134,6 @@ func (pdb *peerboltdb) GetPeerInfos() (map[lncore.LnAddr]lncore.PeerInfo, error)
 
 }
 
-func (pdb *peerboltdb) AddPeer(addr lncore.LnAddr, pi lncore.PeerInfo) error {
-	return pdb.UpdatePeer(addr, &pi)
-}
-
 func (pdb *peerboltdb) UpdatePeer(addr lncore.LnAddr, pi *lncore.PeerInfo) error {
 
 	var err error
